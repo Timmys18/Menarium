@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String
+  image         String?
+  city          String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  items         Item[]    @relation("UserItems")
+  sentRequests     SwapRequest[] @relation("SenderRequests")
+  receivedRequests SwapRequest[] @relation("ReceiverRequests")
+  messages      Message[]
+  confirmedChains ExchangeChain[] @relation("ConfirmedBy")
+}
+
+model Item {
+  id          String   @id @default(cuid())
+  title       String
+  type        String   // THING or SERVICE
+  category    String
+  description String
+  images      String   // JSON-serialized array of image URLs
+  city        String
+  isOnline    Boolean  @default(false)
+  userId      String
+  user        User     @relation("UserItems", fields: [userId], references: [id])
+  desiredCategories String // JSON-serialized array of categories
+  acceptsAnything Boolean @default(false)
+  additionalItems AdditionalItem[]
+  additionalItemIds String // JSON-serialized array of item IDs
+  extraOfferText String? // Optional text field for additional offers
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  sentSwaps     SwapRequest[] @relation("SenderItems")
+  receivedSwaps SwapRequest[] @relation("ReceiverItems")
+  exchangeChains ExchangeChain[] @relation("ChainItems")
+}
+
+model AdditionalItem {
+  id        String   @id @default(cuid())
+  itemId    String
+  item      Item     @relation(fields: [itemId], references: [id])
+  comment   String?
+  createdAt DateTime @default(now())
+}
+
+model SwapRequest {
+  id            String   @id @default(cuid())
+  senderId      String
+  sender        User     @relation("SenderRequests", fields: [senderId], references: [id])
+  receiverId    String
+  receiver      User     @relation("ReceiverRequests", fields: [receiverId], references: [id])
+  senderItemId  String
+  senderItem    Item     @relation("SenderItems", fields: [senderItemId], references: [id])
+  receiverItemId String
+  receiverItem  Item     @relation("ReceiverItems", fields: [receiverItemId], references: [id])
+  status        String   // PENDING, ACCEPTED, REJECTED, COMPLETED
+  messages      Message[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Message {
+  id            String   @id @default(cuid())
+  swapRequestId String
+  swapRequest   SwapRequest @relation(fields: [swapRequestId], references: [id])
+  senderId      String
+  sender        User     @relation(fields: [senderId], references: [id])
+  text          String
+  createdAt     DateTime @default(now())
+}
+
+model ExchangeChain {
+  id          String   @id @default(cuid())
+  items       Item[]   @relation("ChainItems")
+  confirmedBy User[]   @relation("ConfirmedBy")
+  status      String   // PENDING, CONFIRMED, REJECTED, COMPLETED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+} 
