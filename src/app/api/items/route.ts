@@ -1,100 +1,46 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { ItemType } from "@/types";
+import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    const body = await req.json();
-    const {
-      title,
-      type,
-      category,
-      description,
-      city,
-      isOnline,
-      acceptsAnything,
-      desiredCategories,
-    } = body;
-
-    if (!title || !type || !category || !description || !city) {
-      return new NextResponse("Missing required fields", { status: 400 });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return new NextResponse("User not found", { status: 404 });
-    }
+    const data = await req.json();
 
     const item = await prisma.item.create({
       data: {
-        title,
-        type,
-        category,
-        description,
-        city,
-        isOnline: isOnline || false,
-        acceptsAnything: acceptsAnything || false,
-        desiredCategories,
-        userId: user.id,
-      },
-    });
-
-    return NextResponse.json(item);
-  } catch (error) {
-    console.error("[ITEMS_POST]", error);
-    return new NextResponse("Internal error", { status: 500 });
-  }
-}
-
-export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const type = searchParams.get("type") as ItemType | null;
-    const category = searchParams.get("category");
-    const city = searchParams.get("city");
-
-    const where: any = {};
-
-    if (type) {
-      where.type = type;
-    }
-
-    if (category) {
-      where.category = category;
-    }
-
-    if (city) {
-      where.city = city;
-    }
-
-    const items = await prisma.item.findMany({
-      where,
-      include: {
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        type: data.type,
+        city: data.city,
+        desiredCategories: JSON.stringify(data.desiredCategories),
+        images: JSON.stringify(data.images ?? []),
+        acceptsAnything: data.acceptsAnything,
+        additionalItemIds: JSON.stringify([]), // ← тут должна быть запятая ✅
         user: {
-          select: {
-            name: true,
-            image: true,
+          connectOrCreate: {
+            where: { email: session.user.email },
+            create: {
+              email: session.user.email,
+              password: 'dev-placeholder',
+            },
           },
         },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
+      }
     });
-
-    return NextResponse.json(items);
+    return NextResponse.json({ id: item.id });
   } catch (error) {
-    console.error("[ITEMS_GET]", error);
-    return new NextResponse("Internal error", { status: 500 });
+    console.error('Ошибка при создании объявления:', error);
+    return NextResponse.json(
+      { error: 'Create failed', details: String(error) },
+      { status: 500 }
+    );
   }
-} 
+}

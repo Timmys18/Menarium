@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -37,11 +34,11 @@ model Item {
   isOnline    Boolean  @default(false)
   userId      String
   user        User     @relation("UserItems", fields: [userId], references: [id])
-  desiredCategories String // JSON-serialized array of categories
+  desiredCategories String   // JSON-serialized array of categories
   acceptsAnything Boolean @default(false)
   additionalItems AdditionalItem[]
-  additionalItemIds String // JSON-serialized array of item IDs
-  extraOfferText String? // Optional text field for additional offers
+  additionalItemIds String   // JSON-serialized array of item IDs
+  extraOfferText String?     // Optional text field for additional offers
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   sentSwaps     SwapRequest[] @relation("SenderItems")
@@ -90,4 +87,4 @@ model ExchangeChain {
   status      String   // PENDING, CONFIRMED, REJECTED, COMPLETED
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-} 
+}
