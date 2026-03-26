@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { actionResponse, errorResponse } from "@/lib/api-response";
 
 export async function POST(req: Request) {
   try {
     const { name, email, password } = await req.json();
 
     if (!email || !password) {
-      return NextResponse.json(
-        { message: "Email и пароль обязательны" },
-        { status: 400 }
-      );
+      return errorResponse("Email и пароль обязательны", 400);
     }
 
     const existingUser = await prisma.user.findUnique({
@@ -18,10 +16,7 @@ export async function POST(req: Request) {
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { message: "Пользователь с таким email уже существует" },
-        { status: 400 }
-      );
+      return errorResponse("Пользователь с таким email уже существует", 400);
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -34,15 +29,13 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json(
+    return actionResponse(
+      { message: "Пользователь успешно создан", userId: user.id },
       { message: "Пользователь успешно создан" },
-      { status: 201 }
+      201,
     );
   } catch (error) {
     console.error("Registration error:", error);
-    return NextResponse.json(
-      { message: "Ошибка при регистрации" },
-      { status: 500 }
-    );
+    return errorResponse("Ошибка при регистрации", 500);
   }
 } 

@@ -33,7 +33,9 @@ export default function NewItemPage() {
   const [type, setType] = useState<ItemType>(ItemType.THING);
   const [category, setCategory] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
-  const [images, setImages] = useState<File[]>([]);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [images, setImages] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const categories = type === ItemType.THING ? ThingCategory : ServiceCategory;
   const categoryLabels =
@@ -41,7 +43,13 @@ export default function NewItemPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (imageLoading) {
+      alert('Дождитесь завершения загрузки изображений.');
+      return;
+    }
+
     setIsLoading(true);
+    setError(null);
 
     const formData = new FormData(e.currentTarget);
 
@@ -54,7 +62,7 @@ export default function NewItemPage() {
       isOnline: formData.get('isOnline') === 'true',
       acceptsAnything: formData.get('acceptsAnything') === 'true',
       desiredCategories: formData.getAll('desiredCategories'),
-      images: [], // заглушка — загружаем позже
+      images: images,
     };
 
     try {
@@ -64,12 +72,18 @@ export default function NewItemPage() {
         body: JSON.stringify(data),
       });
 
-      if (!response.ok) throw new Error('Failed to create item');
-
       const result = await response.json();
+      console.log('📦 API result:', result);
+
+      if (!response.ok || !result?.id) {
+        setError('Ошибка при создании объявления. Попробуйте ещё раз.');
+        return;
+      }
+
       router.push(`/item/${result.id}`);
-    } catch (error) {
-      console.error('Error creating item:', error);
+    } catch (err) {
+      console.error('💥 Ошибка при отправке:', err);
+      setError('Произошла ошибка. Проверьте соединение или повторите позже.');
     } finally {
       setIsLoading(false);
     }
@@ -78,6 +92,13 @@ export default function NewItemPage() {
   return (
     <div className="max-w-2xl mx-auto py-10">
       <h1 className="text-3xl font-bold mb-6">Создать объявление</h1>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-300 text-sm text-red-700 rounded-lg">
+          {error}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
           <Label>Тип</Label>
@@ -136,26 +157,14 @@ export default function NewItemPage() {
         )}
 
         <div className="space-y-2">
-          <Label>Желаемые категории обмена</Label>
-          <div className="grid grid-cols-2 gap-4">
-            {Object.entries(categories).map(([key, value]) => (
-              <div key={key} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`category-${key}`}
-                  name="desiredCategories"
-                  value={value}
-                />
-                <Label htmlFor={`category-${key}`}>
-                  {categoryLabels[value as keyof typeof categoryLabels]}
-                </Label>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Изображения</Label>
-          <ImageUpload onChange={setImages} />
+          <ImageUpload
+            value={images}
+            onChange={setImages}
+            setLoading={setImageLoading}
+          />
+          {imageLoading && (
+            <p className="text-sm text-gray-500">Загрузка изображений...</p>
+          )}
         </div>
 
         <div className="flex items-center space-x-2">
@@ -163,7 +172,7 @@ export default function NewItemPage() {
           <Label htmlFor="acceptsAnything">Рассмотрю любые варианты</Label>
         </div>
 
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" disabled={isLoading || imageLoading}>
           {isLoading ? 'Создание...' : 'Создать объявление'}
         </Button>
       </form>

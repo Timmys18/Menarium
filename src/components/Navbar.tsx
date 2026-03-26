@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import NotificationsDropdown from './NotificationsDropdown';
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -40,6 +41,12 @@ export default function Navbar() {
             <Link href="/swaps" className="text-sm font-medium hover:text-primary transition-colors">
               Обмены
             </Link>
+
+            <Link href="/swipe" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
+              <span role="img" aria-label="swipe">🌀</span> Свайп-обмен
+            </Link>
+
+            <NotificationsDropdown />
 
             {session ? (
               <>

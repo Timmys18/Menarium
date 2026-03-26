@@ -38,7 +38,7 @@ export default function RegisterPage() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || "Ошибка при регистрации");
+        throw new Error(data.error || data.message || "Ошибка при регистрации");
       }
 
       router.push("/auth/login?registered=true");

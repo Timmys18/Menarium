@@ -5,13 +5,14 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ClientProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // редирект если неавторизован
   useEffect(() => {
@@ -22,21 +23,43 @@ export default function ClientProfilePage() {
 
   // загрузка данных пользователя
   useEffect(() => {
-    if (session?.user?.id && !user) {
-      fetch(`/api/users/${session.user.id}`)
-        .then((res) => res.json())
-        .then((data) => setUser(data));
+    if (session?.user?.id && !user && !error) {
+      const loadUser = async () => {
+        try {
+          const res = await fetch(`/api/users/${session.user.id}`);
+
+          if (res.status === 404) {
+            setUser(null);
+            setError('Пользователь не найден.');
+            return;
+          }
+
+          if (!res.ok) {
+            setUser(null);
+            setError('Не удалось загрузить данные. Попробуйте обновить страницу.');
+            return;
+          }
+
+          const data = await res.json();
+          setUser(data);
+        } catch {
+          setUser(null);
+          setError('Не удалось загрузить данные. Попробуйте обновить страницу.');
+        }
+      };
+
+      loadUser();
     }
-  }, [session, user]);
+  }, [session, user, error]);
 
   // скелетон при загрузке
   if (status === "loading") {
     return <Skeleton className="h-[300px]" />;
   }
 
-  // защита от пустого пользователя
-  if (status === "authenticated" && !user) {
-    return <div className="text-center text-muted-foreground mt-10">Пользователь не найден.</div>;
+  // состояние ошибки / отсутствия пользователя
+  if (status === "authenticated" && error) {
+    return <div className="text-center text-muted-foreground mt-10">{error}</div>;
   }
 
   return (
@@ -46,12 +69,9 @@ export default function ClientProfilePage() {
         <Card className="md:col-span-1">
           <CardHeader>
             <div className="flex items-center space-x-4">
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={user?.image || ""} />
-                <AvatarFallback>
-                  {user?.name?.charAt(0) || user?.email?.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
+              <div className="h-16 w-16">
+                <Avatar src={user?.image || ""} alt={user?.name || user?.email} fallback={user?.name?.charAt(0) || user?.email?.charAt(0)} />
+              </div>
               <div>
                 <CardTitle>{user?.name || "Пользователь"}</CardTitle>
                 <p className="text-sm text-muted-foreground">{user?.email}</p>

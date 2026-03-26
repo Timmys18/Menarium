@@ -1,50 +1,109 @@
-import Image from 'next/image';
+// src/components/ItemCard.tsx
+
+'use client';
+
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Item } from '@prisma/client';
+import { Pencil } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 
 interface ItemCardProps {
-  id: string;
-  title: string;
-  description: string;
-  imageUrl: string;
-  owner: {
-    name: string;
-    location: string;
-  };
+  item: Item;
+  currentUserId?: string | null;
+  from?: 'my-items' | 'catalog';
+  isDragging?: boolean;
 }
 
-export function ItemCard({ id, title, description, imageUrl, owner }: ItemCardProps) {
+export default function ItemCard({
+  item,
+  currentUserId,
+  from,
+  isDragging = false,
+}: ItemCardProps) {
+  const isOwner = currentUserId === item.userId;
+  const dragBlocked = useRef(false);
+  const clickAllowed = useRef(true);
+
+  useEffect(() => {
+    if (isDragging) {
+      dragBlocked.current = true;
+      setTimeout(() => (dragBlocked.current = false), 50);
+    }
+  }, [isDragging]);
+
+  const handlePointerDown = () => {
+    clickAllowed.current = true;
+  };
+
+  const handlePointerMove = () => {
+    clickAllowed.current = false;
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (!clickAllowed.current || dragBlocked.current) {
+      e.preventDefault();
+    }
+  };
+
+  const url =
+    from === 'my-items' ? `/item/${item.id}?from=my-items` : `/item/${item.id}`;
+
+  let image = '';
+  try {
+    const arr = JSON.parse(item.images);
+    if (Array.isArray(arr)) image = arr[0];
+  } catch {
+    image = '';
+  }
+
+  const isInDeal = item.status === 'IN_DEAL';
+  const isArchived = item.status === 'ARCHIVED';
+
   return (
-    <Card className="overflow-hidden transition-all hover:shadow-lg">
-      <CardHeader className="p-0">
-        <div className="aspect-square relative overflow-hidden">
-          <Image
-            src={imageUrl}
-            alt={title}
-            fill
-            className="object-cover transition-transform hover:scale-105"
-          />
+    <div className="relative border rounded-xl bg-white shadow hover:shadow-lg transition overflow-hidden">
+      {/* Бейдж статуса */}
+      {isInDeal && (
+        <div className="absolute top-2 left-2 z-10 rounded-full bg-amber-500 text-white text-xs px-2 py-0.5">
+          В сделке
         </div>
-      </CardHeader>
-      <CardContent className="p-4">
-        <h3 className="text-lg font-semibold line-clamp-1">{title}</h3>
-        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{description}</p>
-        <div className="flex items-center mt-3 text-sm text-muted-foreground">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-          </svg>
-          {owner.location}
+      )}
+      {isArchived && (
+        <div className="absolute top-2 left-2 z-10 rounded-full bg-slate-500 text-white text-xs px-2 py-0.5">
+          Завершено
         </div>
-      </CardContent>
-      <CardFooter className="p-4 pt-0 flex justify-between items-center">
-        <div className="text-sm font-medium">{owner.name}</div>
-        <Link href={`/items/${id}`}>
-          <Button variant="secondary" size="sm">
-            Подробнее
-          </Button>
+      )}
+
+      {/* Кнопка редактирования только для активных объявлений */}
+      {isOwner && !isInDeal && !isArchived && (
+        <Link
+          href={`/item/${item.id}/edit`}
+          className="absolute top-2 right-2 bg-white rounded-full p-1 shadow hover:scale-105 transition z-10"
+          title="Редактировать"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Pencil className="w-4 h-4 text-blue-600" />
         </Link>
-      </CardFooter>
-    </Card>
+      )}
+
+      <Link
+        href={url}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onClick={handleClick}
+        className="block"
+      >
+        {image && (
+          <img
+            src={image}
+            alt={item.title}
+            className="w-full h-48 object-cover"
+          />
+        )}
+        <div className="p-4">
+          <h3 className="text-lg font-semibold truncate">{item.title}</h3>
+          <p className="text-sm text-muted-foreground truncate">{item.description}</p>
+        </div>
+      </Link>
+    </div>
   );
-} 
+}

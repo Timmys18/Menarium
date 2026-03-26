@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
@@ -17,7 +16,7 @@ export default function Home() {
                 Мечты по бартеру
               </p>
               <div className="space-x-4">
-                <Link href="/items">
+                <Link href="/exchange">
                   <Button size="lg" className="bg-primary hover:bg-primary/90">
                     Начать обмен
                   </Button>
@@ -86,7 +85,7 @@ export default function Home() {
               <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
                 Присоединяйтесь к нашему сообществу и начните обмениваться уже сегодня
               </p>
-              <Link href="/register">
+              <Link href="/auth/register">
                 <Button size="lg" className="bg-primary hover:bg-primary/90">
                   Зарегистрироваться
                 </Button>
