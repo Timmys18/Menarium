@@ -1,4 +1,4 @@
--- CreateTable
+-- CreateTable (PostgreSQL: TIMESTAMP(3) matches Prisma DateTime)
 CREATE TABLE "User" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT,
@@ -6,8 +6,8 @@ CREATE TABLE "User" (
     "password" TEXT NOT NULL,
     "image" TEXT,
     "city" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
 );
 
 -- CreateTable
@@ -23,8 +23,8 @@ CREATE TABLE "Item" (
     "userId" TEXT NOT NULL,
     "desiredCategories" TEXT NOT NULL,
     "acceptsAnything" BOOLEAN NOT NULL DEFAULT false,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "Item_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
@@ -33,7 +33,7 @@ CREATE TABLE "AdditionalItem" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "itemId" TEXT NOT NULL,
     "comment" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "AdditionalItem_itemId_fkey" FOREIGN KEY ("itemId") REFERENCES "Item" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
@@ -45,8 +45,8 @@ CREATE TABLE "SwapRequest" (
     "senderItemId" TEXT NOT NULL,
     "receiverItemId" TEXT NOT NULL,
     "status" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "SwapRequest_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "SwapRequest_receiverId_fkey" FOREIGN KEY ("receiverId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "SwapRequest_senderItemId_fkey" FOREIGN KEY ("senderItemId") REFERENCES "Item" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
@@ -59,7 +59,7 @@ CREATE TABLE "Message" (
     "swapRequestId" TEXT NOT NULL,
     "senderId" TEXT NOT NULL,
     "text" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "Message_swapRequestId_fkey" FOREIGN KEY ("swapRequestId") REFERENCES "SwapRequest" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "Message_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
@@ -68,8 +68,8 @@ CREATE TABLE "Message" (
 CREATE TABLE "ExchangeChain" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "status" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
 );
 
 -- CreateTable
