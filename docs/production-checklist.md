@@ -4,7 +4,7 @@
 
 ## Build and runtime
 
-- [ ] `npm ci` выполнен без ошибок
+- [ ] `npm ci --include=dev` (или эквивалент) выполнен без ошибок
 - [ ] `npm run build` выполнен без ошибок
 - [ ] `npm run start` локально запускается
 - [ ] `pm2 start ecosystem.config.js` успешно запускает приложение

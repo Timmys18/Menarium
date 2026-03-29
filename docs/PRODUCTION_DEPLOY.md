@@ -53,7 +53,7 @@ bash scripts/deploy-production.sh
 1. Проверяет, что нет незакоммиченных локальных изменений (иначе `git pull` опасен).
 2. `git pull`
 3. Подгружает `.env` или `.env.production` для команд в терминале.
-4. `npm ci`
+4. `npm ci --include=dev` (devDependencies нужны для `next build`: Tailwind, PostCSS, TypeScript)
 5. `npx prisma migrate deploy`
 6. `npm run build`
 7. `pm2 restart menarium` (или первый запуск через `ecosystem.config.js`, если процесса ещё нет)

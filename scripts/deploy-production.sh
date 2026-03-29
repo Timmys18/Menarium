@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Production release: pull → npm ci → migrate → build → pm2 restart.
+# Production release: pull → npm ci (с devDependencies для сборки) → migrate → build → pm2 restart.
 # Запускать из корня репозитория на сервере: bash scripts/deploy-production.sh
 set -euo pipefail
 
@@ -51,8 +51,8 @@ else
   exit 1
 fi
 
-log "Зависимости (npm ci)"
-npm ci
+log "Зависимости (npm ci --include=dev — нужны tailwind/postcss/typescript для next build)"
+npm ci --include=dev
 
 log "Миграции (npx prisma migrate deploy)"
 npx prisma migrate deploy
