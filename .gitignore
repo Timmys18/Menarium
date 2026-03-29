@@ -132,6 +132,9 @@ dist
 # Local production env file (keep only templates in git)
 .env.production
 
+# Local PostgreSQL dumps (scripts/backup-db.sh)
+backups/
+
 # Local development artifacts
 .pgdata-menarium/
 .pgpass-menarium.txt

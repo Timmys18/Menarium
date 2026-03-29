@@ -106,6 +106,56 @@ curl -sS https://menarium.ru/api/health
 
 Если откатываете коммит с **уже применёнными** миграциями БД, только передеплой кода может быть недостаточно — смотрите состояние `_prisma_migrations` и при необходимости восстановление БД из бэкапа Yandex.
 
+## Резервные копии PostgreSQL (pg_dump на диск)
+
+Помимо бэкапов в консоли облака можно держать **локальные дампы** на сервере.
+
+**На сервере:** установите клиент PostgreSQL, если ещё нет:
+
+```bash
+sudo apt-get update && sudo apt-get install -y postgresql-client
+```
+
+**Ручной запуск** из корня репозитория:
+
+```bash
+bash scripts/backup-db.sh
+```
+
+- Пишет `backups/pg-dumps/menarium-YYYYMMDD-HHMMSS.dump` (формат **custom**, `pg_dump -Fc`).
+- Хранит по умолчанию **7** последних файлов (`BACKUP_RETAIN_COUNT=14` — если нужно больше/меньше).
+- Другой каталог: `BACKUP_DIR=/var/backups/menarium bash scripts/backup-db.sh`.
+
+**Cron (пример — каждый день в 03:15):**
+
+```bash
+crontab -e
+```
+
+Строка (путь к проекту поправьте под себя):
+
+```
+15 3 * * * cd /home/ubuntu/Menarium && /usr/bin/bash scripts/backup-db.sh >> /var/log/menarium-backup.log 2>&1
+```
+
+Копирование дампов в Object Storage можно подключить отдельно (например, `aws s3 cp` или `yc storage`) — в репозитории не зашито, чтобы не плодить секреты.
+
+### Восстановление из дампа
+
+1. Остановите приложение: `pm2 stop menarium`.
+2. Убедитесь, что `DATABASE_URL` в `.env` / `.env.production` указывает на **ту БД**, куда нужно залить дамп.
+3. Запустите:
+
+```bash
+bash scripts/restore-db.sh backups/pg-dumps/menarium-YYYYMMDD-HHMMSS.dump
+```
+
+Скрипт спросит подтверждение (`YES`). Без вопросов (только если понимаете риск): `FORCE=1 bash scripts/restore-db.sh путь/к/файлу.dump`.
+
+4. Запустите приложение: `pm2 start menarium`.
+
+`pg_restore` использует `--clean --if-exists`: объекты в базе с теми же именами будут пересозданы. Для managed PostgreSQL это обычно уместно вместе с `--no-owner --no-acl`.
+
 ## Чеклист после настройки
 
 См. `docs/production-checklist.md` (короткий список проверок; детали — в этом файле).

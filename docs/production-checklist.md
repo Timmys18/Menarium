@@ -23,6 +23,7 @@
 - [ ] `npm run migrate:prod` выполнен успешно
 - [ ] Проверен доступ к БД из приложения
 - [ ] Включены автоматические backup в Yandex Managed PostgreSQL
+- [ ] (Опционально) Настроен cron для `scripts/backup-db.sh` — см. `docs/PRODUCTION_DEPLOY.md`
 
 ## Domain and HTTPS
 

@@ -10,6 +10,7 @@
     "stop:pm2": "pm2 stop menarium && pm2 delete menarium",
     "migrate:prod": "node scripts/migrate-prod.mjs",
     "deploy:production": "bash scripts/deploy-production.sh",
+    "backup:db": "bash scripts/backup-db.sh",
     "lint": "next lint",
     "test:smoke": "playwright test tests/smoke --reporter=list"
   },
