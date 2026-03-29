@@ -1,5 +1,7 @@
 # Production Checklist
 
+Порядок настройки и деплоя: **[PRODUCTION_DEPLOY.md](./PRODUCTION_DEPLOY.md)**.
+
 ## Build and runtime
 
 - [ ] `npm ci` выполнен без ошибок
@@ -10,7 +12,7 @@
 
 ## Environment
 
-- [ ] На сервере заполнен `.env` из шаблона `.env.production`
+- [ ] На сервере заполнен `.env.production` по шаблону `.env.production.example` (и при необходимости `.env` для Prisma CLI)
 - [ ] `NODE_ENV=production`
 - [ ] `DATABASE_URL` указывает на production PostgreSQL в РФ
 - [ ] `NEXTAUTH_URL=https://menarium.ru`

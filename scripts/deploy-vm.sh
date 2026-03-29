@@ -22,7 +22,7 @@ npm install
 
 if [[ ! -f ".env.production" ]]; then
   echo "ОШИБКА: не найден файл .env.production"
-  echo "Сначала заполните .env.production по инструкции в docs/DEPLOY_STEP_BY_STEP.md"
+  echo "Сначала заполните .env.production по docs/PRODUCTION_DEPLOY.md"
   exit 1
 fi
 

@@ -1,7 +1,7 @@
 param(
   [string]$ServerIp,
   [string]$ServerUser = "root",
-  [string]$ServerProjectDir = "/var/www/menarium"
+  [string]$ServerProjectDir = "/home/ubuntu/Menarium"
 )
 
 $ErrorActionPreference = "Stop"
@@ -27,7 +27,7 @@ if ([string]::IsNullOrWhiteSpace($ServerIp)) {
 }
 
 if ([string]::IsNullOrWhiteSpace($ServerProjectDir)) {
-  $ServerProjectDir = "/var/www/menarium"
+  $ServerProjectDir = "/home/ubuntu/Menarium"
 }
 
 $sshTarget = "$ServerUser@$ServerIp"
@@ -35,13 +35,13 @@ $sshTarget = "$ServerUser@$ServerIp"
 Write-User "Шаг 1: отправляем код в GitHub (publish)..."
 & powershell -ExecutionPolicy Bypass -File .\scripts\publish.ps1
 
-Write-User "Шаг 2: подключаемся к серверу и обновляем сайт (redeploy)..."
+Write-User "Шаг 2: подключаемся к серверу и запускаем deploy-production.sh..."
 
 if (-not (Get-Command ssh -ErrorAction SilentlyContinue)) {
   Fail "На Windows не найден `ssh`. Установи/включи OpenSSH (это стандартная опция Windows)."
 }
 
-$remoteCmd = "cd `"$ServerProjectDir`" && bash scripts/redeploy.sh"
+$remoteCmd = "cd `"$ServerProjectDir`" && bash scripts/deploy-production.sh"
 
 try {
   & ssh $sshTarget $remoteCmd
