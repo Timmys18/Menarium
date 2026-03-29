@@ -14,24 +14,9 @@ export default async function EditItemPage({ params }: { params: { id: string } 
 
   if (!item || item.userId !== session.user.id) return notFound();
 
-  const updateItem = async (data: any) => {
-    'use server';
-    await prisma.item.update({
-      where: { id: params.id },
-      data,
-    });
-    redirect(`/item/${params.id}`);
-  };
-
-  const deleteItem = async () => {
-    'use server';
-    await prisma.item.delete({ where: { id: params.id } });
-    redirect('/profile/my-items');
-  };
-
   return (
     <div className="max-w-2xl mx-auto p-6">
-      <EditItemForm initialData={item} onSubmit={updateItem} />
+      <EditItemForm initialData={item} />
     </div>
   );
 }

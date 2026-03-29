@@ -57,10 +57,21 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
     }
 
     const data = await req.json();
-    const imageValidation = validateImageList(data.images);
+
+    let imagesInput: unknown = data.images;
+    if (typeof imagesInput === 'string') {
+      try {
+        imagesInput = JSON.parse(imagesInput);
+      } catch {
+        return errorResponse('Некорректный формат поля images.', 400);
+      }
+    }
+    const imageValidation = validateImageList(imagesInput);
     if (!imageValidation.ok) {
       return errorResponse(imageValidation.error, 400);
     }
+
+    const imagesJson = JSON.stringify(imageValidation.images);
 
     const updated = await prisma.item.update({
       where: { id },
@@ -68,9 +79,11 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
         title: data.title,
         description: data.description,
         city: data.city,
+        type: data.type,
         category: data.category,
         desiredCategories: data.desiredCategories,
-        images: data.images,
+        images: imagesJson,
+        acceptsAnything: data.acceptsAnything,
         extraOfferText: data.extraOfferText,
       },
     });

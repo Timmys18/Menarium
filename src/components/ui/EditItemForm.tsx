@@ -10,10 +10,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 
 interface EditItemFormProps {
   initialData: Item;
-  onSubmit: (data: any) => void;
 }
 
-export default function EditItemForm({ initialData, onSubmit }: EditItemFormProps) {
+export default function EditItemForm({ initialData }: EditItemFormProps) {
   const router = useRouter();
   const [title, setTitle] = useState(initialData.title || '');
   const [description, setDescription] = useState(initialData.description || '');
@@ -32,18 +31,38 @@ export default function EditItemForm({ initialData, onSubmit }: EditItemFormProp
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
-      title,
-      description,
-      city,
-      type,
-      category,
-      images: JSON.stringify(images),
-      desiredCategories: JSON.stringify(desiredCategories),
-      acceptsAnything,
+    const res = await fetch(`/api/items/${initialData.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title,
+        description,
+        city,
+        type,
+        category,
+        images: JSON.stringify(images),
+        desiredCategories: JSON.stringify(desiredCategories),
+        acceptsAnything,
+      }),
     });
+
+    if (res.ok) {
+      router.push(`/item/${initialData.id}`);
+      return;
+    }
+
+    let message = 'Не удалось сохранить объявление.';
+    try {
+      const data = await res.json();
+      if (data?.error && typeof data.error === 'string') {
+        message = data.error;
+      }
+    } catch {
+      /* ignore */
+    }
+    alert(message);
   };
 
   const handleDelete = async () => {
