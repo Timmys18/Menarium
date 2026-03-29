@@ -40,14 +40,32 @@ mkdir -p "$BACKUP_DIR"
 
 STAMP="$(date +%Y%m%d-%H%M%S)"
 OUT="$BACKUP_DIR/menarium-${STAMP}.dump"
+TMP="${OUT}.tmp.$$"
 
-echo "==> Дамп в $OUT"
+echo "==> Дамп во временный файл, затем $OUT"
 
+set +e
 pg_dump "$DATABASE_URL" \
   -Fc \
   --no-owner \
   --no-acl \
-  -f "$OUT"
+  -f "$TMP"
+DUMP_STATUS=$?
+set -e
+
+if [ "$DUMP_STATUS" -ne 0 ]; then
+  echo "ОШИБКА: pg_dump завершился с кодом $DUMP_STATUS" >&2
+  rm -f "$TMP"
+  exit 1
+fi
+
+if [ ! -s "$TMP" ]; then
+  echo "ОШИБКА: дамп пустой (0 байт), файл удалён" >&2
+  rm -f "$TMP"
+  exit 1
+fi
+
+mv "$TMP" "$OUT"
 
 echo "==> Размер: $(du -h "$OUT" | cut -f1)"
 
