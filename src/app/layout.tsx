@@ -1,6 +1,6 @@
 import './globals.css'
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Space_Grotesk } from 'next/font/google'
 import { Toaster } from '@/components/ui/toaster'
 import { ThemeProvider } from '@/components/theme-provider'
 import { AuthSessionProvider } from '@/components/auth-session-provider'
@@ -8,7 +8,11 @@ import Navbar from '@/components/Navbar' // ✅ вот так правильно
 import Footer from '@/components/Footer'
 
 
-const inter = Inter({ subsets: ['latin', 'cyrillic'] })
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'Менариум - Платформа обмена вещами',
@@ -22,12 +26,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${spaceGrotesk.variable} ${spaceGrotesk.className}`}>
         <AuthSessionProvider>
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
-            enableSystem
+            defaultTheme="dark"
+            enableSystem={false}
             disableTransitionOnChange
           >
             <div className="min-h-screen flex flex-col">

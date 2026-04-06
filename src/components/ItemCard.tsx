@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Item } from '@prisma/client';
 import { Pencil } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+import { Badge, GlassCard, IconContainer } from '@/components/menarium';
 
 interface ItemCardProps {
   item: Item;
@@ -60,28 +61,35 @@ export default function ItemCard({
   const isArchived = item.status === 'ARCHIVED';
 
   return (
-    <div className="relative border rounded-xl bg-white shadow hover:shadow-lg transition overflow-hidden">
-      {/* Бейдж статуса */}
+    <GlassCard variant="hover" className="relative overflow-hidden border-white/10">
       {isInDeal && (
-        <div className="absolute top-2 left-2 z-10 rounded-full bg-amber-500 text-white text-xs px-2 py-0.5">
-          В сделке
+        <div className="absolute left-2 top-2 z-10">
+          <Badge
+            variant="gradient"
+            className="border-0 bg-gradient-to-r from-amber-500/90 to-orange-600/90 text-white"
+          >
+            В сделке
+          </Badge>
         </div>
       )}
       {isArchived && (
-        <div className="absolute top-2 left-2 z-10 rounded-full bg-slate-500 text-white text-xs px-2 py-0.5">
-          Завершено
+        <div className="absolute left-2 top-2 z-10">
+          <Badge variant="default" className="bg-white/10 text-white/90">
+            Завершено
+          </Badge>
         </div>
       )}
 
-      {/* Кнопка редактирования только для активных объявлений */}
       {isOwner && !isInDeal && !isArchived && (
         <Link
           href={`/item/${item.id}/edit`}
-          className="absolute top-2 right-2 bg-white rounded-full p-1 shadow hover:scale-105 transition z-10"
+          className="absolute right-2 top-2 z-10 rounded-full p-0.5 transition hover:scale-105"
           title="Редактировать"
           onClick={(e) => e.stopPropagation()}
         >
-          <Pencil className="w-4 h-4 text-blue-600" />
+          <IconContainer size="sm" variant="glass">
+            <Pencil className="text-primary" aria-hidden />
+          </IconContainer>
         </Link>
       )}
 
@@ -96,14 +104,14 @@ export default function ItemCard({
           <img
             src={image}
             alt={item.title}
-            className="w-full h-48 object-cover"
+            className="h-48 w-full object-cover"
           />
         )}
         <div className="p-4">
-          <h3 className="text-lg font-semibold truncate">{item.title}</h3>
-          <p className="text-sm text-muted-foreground truncate">{item.description}</p>
+          <h3 className="truncate text-lg font-semibold text-foreground">{item.title}</h3>
+          <p className="truncate text-sm text-muted-foreground">{item.description}</p>
         </div>
       </Link>
-    </div>
+    </GlassCard>
   );
 }

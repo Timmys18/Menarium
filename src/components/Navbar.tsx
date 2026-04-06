@@ -3,8 +3,11 @@
 import Link from 'next/link';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { Button as MButton, GlassCard } from '@/components/menarium';
 import NotificationsDropdown from './NotificationsDropdown';
+
+const navLinkClass =
+  'text-sm font-medium text-white/70 transition-colors hover:text-white';
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -19,60 +22,65 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full">
-      <div className="container mx-auto px-4 h-16">
-        <div className="flex justify-between h-full items-center">
-          <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent hover:opacity-80 transition-opacity">
+    <nav className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/40 py-3 backdrop-blur-xl supports-[backdrop-filter]:bg-background/30">
+      <div className="container mx-auto px-4">
+        <GlassCard className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <Link
+            href="/"
+            className="gradient-text-brand text-xl font-bold tracking-tight sm:text-2xl"
+          >
             Менариум
           </Link>
 
-          <div className="flex items-center space-x-6">
-            <Link href="/catalog" className="text-sm font-medium hover:text-primary transition-colors">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 md:gap-4">
+            <Link href="/catalog" className={navLinkClass}>
               Каталог
             </Link>
 
-            <button
+            <MButton
+              type="button"
+              variant="ghost"
+              size="sm"
               onClick={handleCreateClick}
-              className="text-sm font-medium hover:text-primary transition-colors"
+              className="!px-3"
             >
               Создать объявление
-            </button>
+            </MButton>
 
-            <Link href="/swaps" className="text-sm font-medium hover:text-primary transition-colors">
+            <Link href="/swaps" className={navLinkClass}>
               Обмены
             </Link>
 
-            <Link href="/swipe" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
-              <span role="img" aria-label="swipe">🌀</span> Свайп-обмен
+            <Link href="/swipe" className={`${navLinkClass} inline-flex items-center gap-1`}>
+              <span role="img" aria-label="swipe">
+                🌀
+              </span>
+              Свайп-обмен
             </Link>
 
             <NotificationsDropdown />
 
             {session ? (
               <>
-                <Link href="/profile" className="text-sm font-medium hover:text-primary transition-colors">
+                <Link href="/profile" className={navLinkClass}>
                   Мой профиль
                 </Link>
-                <Button
-                  onClick={() => signOut()}
-                  variant="outline"
+                <MButton
+                  type="button"
+                  variant="secondary"
                   size="sm"
-                  className="hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                  onClick={() => signOut()}
                 >
                   Выйти
-                </Button>
+                </MButton>
               </>
             ) : (
-              <Button
-                onClick={() => signIn()}
-                size="sm"
-                className="bg-primary hover:bg-primary/90 transition-colors"
-              >
+              <MButton type="button" variant="primary" size="sm" onClick={() => signIn()}>
                 Войти
-              </Button>
+              </MButton>
             )}
           </div>
-        </div>
+        </GlassCard>
       </div>
     </nav>
   );

@@ -3,10 +3,10 @@ import type { Config } from "tailwindcss"
 const config = {
   darkMode: ["class"],
   content: [
-    './pages/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './app/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
   ],
   prefix: "",
   theme: {
@@ -18,6 +18,9 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -52,11 +55,56 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        brand: {
+          blue: "hsl(var(--brand-blue))",
+          "blue-light": "hsl(var(--brand-blue-light))",
+        },
+        menarium: {
+          teal: "hsl(var(--teal))",
+          cyan: "hsl(var(--cyan))",
+          purple: "hsl(var(--purple))",
+          fuchsia: "hsl(var(--fuchsia))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "0.75rem",
+        "2xl": "1rem",
+        "3xl": "1.5rem",
+        "4xl": "2rem",
+      },
+      spacing: {
+        "page-top": "6rem",
+        "page-top-lg": "8rem",
+        "page-bottom": "8rem",
+      },
+      boxShadow: {
+        glass:
+          "0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+        "glass-hover":
+          "0 20px 60px rgba(59, 127, 255, 0.3), 0 0 0 1px rgba(59, 127, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+        "glow-teal":
+          "0 0 40px rgba(20, 184, 166, 0.5), 0 0 80px rgba(20, 184, 166, 0.2)",
+        "glow-purple":
+          "0 0 40px rgba(59, 127, 255, 0.5), 0 0 80px rgba(59, 127, 255, 0.2)",
+        "glow-blue":
+          "0 0 40px rgba(59, 127, 255, 0.6), 0 0 80px rgba(59, 127, 255, 0.3)",
+      },
+      backgroundImage: {
+        "gradient-brand":
+          "linear-gradient(to right, #3B7FFF, #5A9BFF)",
+        "gradient-brand-wide":
+          "linear-gradient(to right, #3B7FFF, #7B5FFF, #BB3FFF)",
+        "gradient-teal-purple":
+          "linear-gradient(to right, rgb(20 184 166), rgb(168 85 247))",
+        "gradient-cyan-blue":
+          "linear-gradient(to right, #00D9FF, #14E4FF)",
+        "gradient-gold":
+          "linear-gradient(to right, #FFB800, #FFC940, #FFD670)",
+        "gradient-glass-tint":
+          "linear-gradient(to right, rgba(20, 184, 166, 0.2), rgba(168, 85, 247, 0.2))",
       },
       keyframes: {
         "accordion-down": {
@@ -77,4 +125,4 @@ const config = {
   plugins: [require("tailwindcss-animate")],
 } satisfies Config
 
-export default config 
+export default config
