@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
-import Link from "next/link";
-import { Button } from "./button";
+import { Button } from "@/components/menarium/Button";
+import { LinkButton } from "@/components/menarium/LinkButton";
 
 interface EmptyStateProps {
   title: string;
@@ -34,11 +34,20 @@ export function EmptyState({
       )}
       {children}
       {actionLabel && (actionHref ? (
-        <Button asChild size="sm" className="mt-2">
-          <Link href={actionHref}>{actionLabel}</Link>
-        </Button>
+        <LinkButton
+          href={actionHref}
+          variant="primary"
+          className="mt-2 !px-5 !py-2.5 !text-sm"
+        >
+          {actionLabel}
+        </LinkButton>
       ) : onAction ? (
-        <Button size="sm" className="mt-2" onClick={onAction}>
+        <Button
+          size="sm"
+          variant="primary"
+          className="mt-2 !px-5 !py-2.5 !text-sm"
+          onClick={onAction}
+        >
           {actionLabel}
         </Button>
       ) : null)}
