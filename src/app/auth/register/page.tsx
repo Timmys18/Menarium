@@ -3,10 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button, GlassCard, Input } from "@/components/menarium";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -54,62 +51,58 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="container flex items-center justify-center min-h-[calc(100vh-4rem)] py-8">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Регистрация</CardTitle>
-          <CardDescription>
+    <div className="container flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8">
+      <GlassCard className="w-full max-w-md p-6 sm:p-8">
+        <div className="mb-6 space-y-2">
+          <h1 className="text-2xl font-bold tracking-tight">Регистрация</h1>
+          <p className="text-sm text-muted-foreground">
             Создайте новый аккаунт для начала обмена
-          </CardDescription>
-        </CardHeader>
+          </p>
+        </div>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+          <div className="space-y-4">
             {error && (
-              <div className="text-sm text-red-500 text-center">{error}</div>
+              <div className="rounded-2xl border border-destructive/40 bg-destructive/10 px-4 py-2 text-center text-sm text-destructive">
+                {error}
+              </div>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="name">Имя</Label>
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                placeholder="Ваше имя"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="example@mail.com"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Пароль</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                required
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Input
+              id="name"
+              name="name"
+              type="text"
+              label="Имя"
+              placeholder="Ваше имя"
+              required
+            />
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              label="Email"
+              placeholder="example@mail.com"
+              required
+            />
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              label="Пароль"
+              required
+            />
+          </div>
+          <div className="mt-6 flex flex-col space-y-4">
+            <Button type="submit" className="w-full justify-center" disabled={isLoading}>
               {isLoading ? "Регистрация..." : "Зарегистрироваться"}
             </Button>
             <div className="text-center text-sm">
               Уже есть аккаунт?{" "}
-              <Link href="/auth/login" className="text-primary hover:underline">
+              <Link href="/auth/login" className="font-medium text-primary hover:underline">
                 Войти
               </Link>
             </div>
-          </CardFooter>
+          </div>
         </form>
-      </Card>
+      </GlassCard>
     </div>
   );
 } 

@@ -1,18 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge, Button, GlassCard, Input } from "@/components/menarium";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const registered = searchParams.get("registered") === "true";
+
+  useEffect(() => {
+    if (!registered) return;
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("registered");
+    const nextQuery = params.toString();
+    router.replace(nextQuery ? `/auth/login?${nextQuery}` : "/auth/login");
+  }, [registered, router, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -44,52 +52,55 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="container flex items-center justify-center min-h-[calc(100vh-4rem)] py-8">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Вход в аккаунт</CardTitle>
-          <CardDescription>
+    <div className="container flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8">
+      <GlassCard className="w-full max-w-md p-6 sm:p-8">
+        <div className="mb-6 space-y-2">
+          <h1 className="text-2xl font-bold tracking-tight">Вход в аккаунт</h1>
+          <p className="text-sm text-muted-foreground">
             Введите свои данные для входа в систему
-          </CardDescription>
-        </CardHeader>
+          </p>
+        </div>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            {error && (
-              <div className="text-sm text-red-500 text-center">{error}</div>
+          <div className="space-y-4">
+            {registered && (
+              <Badge variant="gradient" className="w-full justify-center py-2 text-sm">
+                Регистрация успешна. Теперь войдите в аккаунт.
+              </Badge>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="example@mail.com"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Пароль</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                required
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            {error && (
+              <div className="rounded-2xl border border-destructive/40 bg-destructive/10 px-4 py-2 text-center text-sm text-destructive">
+                {error}
+              </div>
+            )}
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              label="Email"
+              placeholder="example@mail.com"
+              required
+            />
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              label="Пароль"
+              required
+            />
+          </div>
+          <div className="mt-6 flex flex-col space-y-4">
+            <Button type="submit" className="w-full justify-center" disabled={isLoading}>
               {isLoading ? "Вход..." : "Войти"}
             </Button>
             <div className="text-center text-sm">
               Нет аккаунта?{" "}
-              <Link href="/auth/register" className="text-primary hover:underline">
+              <Link href="/auth/register" className="font-medium text-primary hover:underline">
                 Зарегистрироваться
               </Link>
             </div>
-          </CardFooter>
+          </div>
         </form>
-      </Card>
+      </GlassCard>
     </div>
   );
 } 
