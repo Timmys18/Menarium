@@ -4,10 +4,10 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { Badge, Button, GlassCard, LinkButton } from '@/components/menarium';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
 import { apiGet, apiPost } from '@/lib/api';
 import { pickArray } from '@/lib/guards';
 import { SwipeCardSkeleton } from '@/components/ui/skeletons';
@@ -210,31 +210,23 @@ export default function SwipePage() {
   // Гейтинг: у авторизованного пользователя нет активных объявлений
   if (!loading && session && !myItemsLoading && !hasActiveMyItems) {
     return (
-      <div className="container mx-auto flex min-h-[80vh] max-w-lg flex-col items-center justify-center px-4 py-10">
-        <GlassCard className="w-full space-y-4 p-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight">
-            <span className="gradient-text-brand">Swipe</span>
-          </h1>
-          <p className="text-sm text-muted-foreground md:text-base">
-            У вас нет активных объявлений для обмена.
-          </p>
-          <LinkButton href="/new" variant="primary" className="w-full justify-center sm:w-auto">
-            Создать объявление
-          </LinkButton>
-        </GlassCard>
+      <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 py-6 text-center space-y-4">
+        <h1 className="text-2xl font-bold">Swipe</h1>
+        <p className="text-slate-600 text-sm max-w-md">
+          У вас нет активных объявлений для обмена.
+        </p>
+        <Button asChild className="mt-2">
+          <Link href="/new">Создать объявление</Link>
+        </Button>
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="container mx-auto flex min-h-[60vh] max-w-lg flex-col items-center px-4 py-10">
-        <div className="mb-6 space-y-2 text-center">
-          <h1 className="text-3xl font-bold tracking-tight">
-            <span className="gradient-text-brand">Swipe</span>
-          </h1>
-          <p className="text-sm text-muted-foreground">Загрузка объявлений...</p>
-        </div>
+      <div className="flex flex-col items-center min-h-[60vh] px-4 py-6">
+        <h1 className="text-2xl font-bold mb-1">Swipe</h1>
+        <p className="text-slate-600 text-sm mb-4">Загрузка объявлений...</p>
         <SwipeCardSkeleton />
       </div>
     );
@@ -242,52 +234,48 @@ export default function SwipePage() {
 
   if (error) {
     return (
-      <div className="container mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-4 py-10">
-        <GlassCard className="w-full space-y-4 p-8 text-center">
-          <p className="text-sm text-destructive">{error}</p>
-          {error === "Необходимо войти в систему." && (
-            <LinkButton href="/auth/login" variant="primary" className="justify-center">
-              Войти
-            </LinkButton>
-          )}
-        </GlassCard>
+      <div className="flex flex-col justify-center items-center min-h-[60vh] px-4 text-center space-y-3">
+        <p className="text-red-600">{error}</p>
+        {error === "Необходимо войти в систему." && (
+          <Button asChild>
+            <Link href="/auth/login">Войти</Link>
+          </Button>
+        )}
       </div>
     );
   }
 
   if (!loading && items.length === 0) {
     return (
-      <div className="container mx-auto flex min-h-[80vh] max-w-lg flex-col items-center justify-center px-4 py-10">
-        <GlassCard className="w-full space-y-4 p-8 text-center">
-          <h1 className="text-xl font-bold tracking-tight md:text-2xl">Нет подходящих объявлений</h1>
-          <p className="text-sm text-muted-foreground md:text-base">
-            Измените фильтры или перейдите в каталог.
-          </p>
-          <LinkButton href="/catalog" variant="secondary" className="justify-center">
-            Перейти в каталог
-          </LinkButton>
-        </GlassCard>
+      <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 py-6 text-center space-y-4">
+        <h1 className="text-2xl font-bold">Нет подходящих объявлений</h1>
+        <p className="text-slate-600 text-sm max-w-md">
+          Измените фильтры или перейдите в каталог.
+        </p>
+        <div className="flex flex-wrap gap-2 justify-center">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/catalog">Перейти в каталог</Link>
+          </Button>
+        </div>
       </div>
     );
   }
 
   if (items.length > 0 && currentIndex >= items.length) {
     return (
-      <div className="container mx-auto flex min-h-[80vh] max-w-lg flex-col items-center justify-center px-4 py-10">
-        <GlassCard className="w-full space-y-4 p-8 text-center">
-          <h1 className="text-xl font-bold tracking-tight md:text-2xl">Объявления закончились</h1>
-          <p className="text-sm text-muted-foreground md:text-base">
-            Вы просмотрели все подходящие объявления. Зайдите позже или измените фильтры.
-          </p>
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
-            <Button variant="secondary" size="sm" className="w-full sm:w-auto" onClick={() => loadSwipeItems()}>
-              Обновить ленту
-            </Button>
-            <LinkButton href="/catalog" variant="primary" className="w-full justify-center sm:w-auto">
-              Перейти в каталог
-            </LinkButton>
-          </div>
-        </GlassCard>
+      <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 py-6 text-center space-y-4">
+        <h1 className="text-2xl font-bold">Объявления закончились</h1>
+        <p className="text-slate-600 text-sm max-w-md">
+          Вы просмотрели все подходящие объявления. Зайдите позже или измените фильтры.
+        </p>
+        <div className="flex flex-wrap gap-2 justify-center">
+          <Button variant="outline" size="sm" onClick={() => loadSwipeItems()}>
+            Обновить ленту
+          </Button>
+          <Button asChild className="mt-2">
+            <Link href="/catalog">Перейти в каталог</Link>
+          </Button>
+        </div>
       </div>
     );
   }
@@ -321,151 +309,139 @@ export default function SwipePage() {
     }
   }
 
-  const toastIsError =
-    toastMessage != null &&
-    (toastMessage.includes('Нельзя') ||
-      toastMessage.includes('Необходимо войти') ||
-      toastMessage.includes('Не удалось'));
-
   return (
-    <div className="container mx-auto flex min-h-[80vh] max-w-lg flex-col items-center px-4 py-8 md:py-10">
-      <div className="mb-6 w-full space-y-2 text-center">
-        <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
-          <span className="gradient-text-brand">Swipe</span>
-        </h1>
-        <p className="text-sm text-muted-foreground md:text-base">Листайте объявления для обмена</p>
+    <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 py-6">
+      <h1 className="text-2xl font-bold mb-1">Swipe</h1>
+      <p className="text-slate-600 text-sm mb-3">Листайте объявления для обмена</p>
+
+      <div className="w-full max-w-md flex flex-wrap gap-2 mb-3">
+        <Select value={filterType || "all"} onValueChange={(v) => setFilterType(v === "all" ? "" : v)}>
+          <SelectTrigger className="w-[120px] h-9 text-xs">
+            <SelectValue placeholder="Тип" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Все типы</SelectItem>
+            {SWIPE_TYPES.map((t) => (
+              <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={filterCategory || "all"} onValueChange={(v) => setFilterCategory(v === "all" ? "" : v)}>
+          <SelectTrigger className="w-[140px] h-9 text-xs">
+            <SelectValue placeholder="Категория" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Все категории</SelectItem>
+            {SWIPE_CATEGORIES.map((c) => (
+              <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={filterCity || "all"} onValueChange={(v) => setFilterCity(v === "all" ? "" : v)}>
+          <SelectTrigger className="w-[140px] h-9 text-xs">
+            <SelectValue placeholder="Город" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Все города</SelectItem>
+            {SWIPE_CITIES.map((city) => (
+              <SelectItem key={city} value={city}>{city}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      <GlassCard className="mb-4 w-full max-w-md space-y-3 p-4 sm:p-5">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Фильтры</p>
-        <div className="flex flex-wrap gap-2">
-          <Select value={filterType || "all"} onValueChange={(v) => setFilterType(v === "all" ? "" : v)}>
-            <SelectTrigger className="h-10 min-w-[124px] flex-1 text-xs sm:text-sm">
-              <SelectValue placeholder="Тип" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Все типы</SelectItem>
-              {SWIPE_TYPES.map((t) => (
-                <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filterCategory || "all"} onValueChange={(v) => setFilterCategory(v === "all" ? "" : v)}>
-            <SelectTrigger className="h-10 min-w-[140px] flex-1 text-xs sm:text-sm">
-              <SelectValue placeholder="Категория" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Все категории</SelectItem>
-              {SWIPE_CATEGORIES.map((c) => (
-                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filterCity || "all"} onValueChange={(v) => setFilterCity(v === "all" ? "" : v)}>
-            <SelectTrigger className="h-10 min-w-[140px] w-full flex-[1_1_100%] text-xs sm:w-auto sm:flex-1 sm:text-sm">
-              <SelectValue placeholder="Город" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Все города</SelectItem>
-              {SWIPE_CITIES.map((city) => (
-                <SelectItem key={city} value={city}>{city}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </GlassCard>
-
       {toastMessage && (
-        <div
-          className={cn(
-            'mb-4 w-full max-w-md rounded-2xl border px-4 py-3 text-center text-sm',
-            toastIsError
-              ? 'border-destructive/40 bg-destructive/10 text-destructive'
-              : 'border-brand-blue/35 bg-brand-blue/10 text-brand-blue-light',
-          )}
-        >
+        <div className="mb-4 bg-blue-100 text-blue-800 rounded px-4 py-2 text-sm w-full max-w-md text-center">
           {toastMessage}
         </div>
       )}
 
       <div className="w-full max-w-md">
         <DndContext sensors={sensors} onDragMove={handleDragMove} onDragEnd={handleDragEnd}>
-          <GlassCard
-            variant="hover"
-            className="relative overflow-hidden rounded-3xl border-white/15 shadow-[0_24px_64px_rgba(0,0,0,0.45)]"
+          <Card
+            className="shadow-xl rounded-3xl overflow-hidden bg-white border border-blue-100 relative"
             style={{
               transform: `translateX(${dragOffsetX}px) rotate(${dragOffsetX / 25}deg)`,
               transition: actionLoading || dialogOpen ? 'none' : 'transform 0.15s ease-out',
             }}
           >
-            <div className="relative flex h-64 items-center justify-center overflow-hidden bg-white/5">
+            <div className="h-64 bg-slate-100 flex items-center justify-center overflow-hidden relative">
               {image ? (
-                <img src={image} alt={item.title} className="h-full w-full object-cover" />
+                <img src={image} alt={item.title} className="w-full h-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
+                <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm">
                   Нет фото
                 </div>
               )}
+              {/* Лёгкий визуальный фидбек свайпа */}
               {dragOffsetX > 30 && (
-                <Badge
-                  variant="gradient"
-                  className="absolute left-3 top-3 border-0 bg-gradient-to-r from-menarium-teal/95 to-menarium-cyan/95 text-xs font-semibold text-white shadow-lg"
-                >
-                  Обмен
-                </Badge>
+                <div className="absolute left-4 top-4 rounded-full bg-green-500/80 text-white text-xs px-3 py-1 flex items-center gap-1">
+                  <span>❤️</span>
+                  <span>Обмен</span>
+                </div>
               )}
               {dragOffsetX < -30 && (
-                <Badge
-                  variant="default"
-                  className="absolute right-3 top-3 border border-white/15 bg-destructive/90 text-xs font-semibold text-white"
-                >
-                  Пропустить
-                </Badge>
+                <div className="absolute right-4 top-4 rounded-full bg-red-500/80 text-white text-xs px-3 py-1 flex items-center gap-1">
+                  <span>❌</span>
+                  <span>Пропустить</span>
+                </div>
               )}
             </div>
-            <div className="space-y-2 p-4 sm:p-5">
-              <div className="truncate text-lg font-semibold text-foreground">{item.title}</div>
-              <div className="text-sm text-muted-foreground">{item.city}</div>
-              <div className="text-xs text-muted-foreground">
-                Категория:{' '}
-                <span className="font-medium text-foreground/90">{item.category}</span>
+            <div className="p-4 space-y-2">
+              <div className="text-lg font-bold truncate">{item.title}</div>
+              <div className="text-sm text-slate-500">{item.city}</div>
+              <div className="text-xs text-slate-500">
+                Категория: <span className="font-medium">{item.category}</span>
               </div>
-              <Link
-                href={`/item/${item.id}?from=swipe`}
-                className="mt-2 inline-flex text-sm font-semibold text-brand-blue transition hover:text-brand-blue-light"
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-1 text-blue-600 hover:bg-blue-50 hover:text-blue-800 rounded-full px-3 py-1"
+                asChild
               >
-                Подробнее
-              </Link>
+                <Link href={`/item/${item.id}?from=swipe`}>Подробнее</Link>
+              </Button>
             </div>
-          </GlassCard>
+          </Card>
         </DndContext>
 
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:gap-4">
-          <Button variant="secondary" size="md" className="min-h-[52px] w-full flex-1 touch-manipulation" onClick={handleSkip}>
-            Пропустить
+        <div className="flex justify-between mt-6 gap-4">
+          <Button
+            variant="outline"
+            size="lg"
+            className="w-1/2 py-3 text-base"
+            onClick={handleSkip}
+          >
+            ❌ Пропустить
           </Button>
-          <Button variant="primary" size="md" className="min-h-[52px] w-full flex-1 touch-manipulation" onClick={handleWantExchange}>
-            Предложить обмен
+          <Button
+            variant="default"
+            size="lg"
+            className="w-1/2 py-3 text-base"
+            onClick={handleWantExchange}
+          >
+            ❤️ Предложить обмен
           </Button>
         </div>
       </div>
 
+      {/* Модал выбора собственного объявления */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="glass-card max-w-md border-white/15 text-foreground sm:rounded-2xl">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold">Выберите своё объявление для обмена</DialogTitle>
+            <DialogTitle>Выберите своё объявление для обмена</DialogTitle>
           </DialogHeader>
           {myItemsLoading ? (
-            <div className="py-4 text-sm text-muted-foreground">Загрузка ваших объявлений...</div>
+            <div className="py-4 text-sm text-slate-500">Загрузка ваших объявлений...</div>
           ) : myItemsError ? (
-            <div className="py-4 text-sm text-destructive">{myItemsError}</div>
+            <div className="py-4 text-sm text-red-600">{myItemsError}</div>
           ) : !hasActiveMyItems ? (
-            <div className="py-4 text-sm text-muted-foreground">
+            <div className="py-4 text-sm text-slate-500">
               У вас нет активных объявлений для обмена.
             </div>
           ) : (
             <Select value={selectedMyItemId} onValueChange={setSelectedMyItemId}>
-              <SelectTrigger className="h-11 w-full">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Выберите объявление" />
               </SelectTrigger>
               <SelectContent>
@@ -477,11 +453,8 @@ export default function SwipePage() {
               </SelectContent>
             </Select>
           )}
-          <DialogFooter className="gap-2 sm:space-x-0">
+          <DialogFooter>
             <Button
-              variant="primary"
-              size="sm"
-              className="w-full sm:w-auto"
               onClick={handleExchange}
               disabled={!selectedMyItemId || actionLoading || !hasActiveMyItems}
             >
