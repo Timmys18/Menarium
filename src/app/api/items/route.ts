@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
   const where: any = { status: 'ACTIVE' };
   if (type) where.type = type;
   if (category) where.category = category;
-  if (city) where.city = city;
+  if (city) where.city = { equals: city, mode: 'insensitive' };
   if (acceptsAnything === 'true') where.acceptsAnything = true;
 
   let orderBy: any = { createdAt: 'desc' };
