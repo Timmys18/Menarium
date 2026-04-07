@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import ItemCard from '@/components/ItemCard';
+import { GlassCard } from '@/components/menarium';
 import { EmptyState } from '@/components/ui/empty-state';
 
 export default async function MyItemsPage() {
@@ -9,13 +10,15 @@ export default async function MyItemsPage() {
 
   if (!session) {
     return (
-      <div className="max-w-6xl mx-auto px-6 py-10">
-        <EmptyState
-          title="Необходима авторизация"
-          description="Войдите, чтобы видеть свои объявления."
-          actionLabel="Войти"
-          actionHref="/auth/login"
-        />
+      <div className="container mx-auto max-w-6xl px-6 py-10">
+        <GlassCard className="p-6 md:p-8">
+          <EmptyState
+            title="Необходима авторизация"
+            description="Войдите, чтобы видеть свои объявления."
+            actionLabel="Войти"
+            actionHref="/auth/login"
+          />
+        </GlassCard>
       </div>
     );
   }
@@ -37,24 +40,35 @@ export default async function MyItemsPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-10">
-      <h1 className="text-2xl font-bold mb-6">Мои объявления</h1>
+    <div className="container mx-auto max-w-6xl space-y-6 px-4 py-8">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
+          Мои <span className="gradient-text-brand">объявления</span>
+        </h1>
+        <p className="text-sm text-muted-foreground md:text-base">
+          Управляйте своими активными карточками обмена
+        </p>
+      </div>
       {error ? (
-        <EmptyState
-          title="Ошибка загрузки"
-          description={error}
-          actionLabel="Обновить"
-          actionHref="/my-items"
-        />
+        <GlassCard className="p-6 md:p-8">
+          <EmptyState
+            title="Ошибка загрузки"
+            description={error}
+            actionLabel="Обновить"
+            actionHref="/my-items"
+          />
+        </GlassCard>
       ) : items.length === 0 ? (
-        <EmptyState
-          title="У вас пока нет объявлений"
-          description="Создайте первое объявление, чтобы начать обмен."
-          actionLabel="Создать объявление"
-          actionHref="/new"
-        />
+        <GlassCard className="p-6 md:p-8">
+          <EmptyState
+            title="У вас пока нет объявлений"
+            description="Создайте первое объявление, чтобы начать обмен."
+            actionLabel="Создать объявление"
+            actionHref="/new"
+          />
+        </GlassCard>
       ) : (
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 md:gap-6">
           {items.map((item) => (
             <ItemCard
               key={item.id}
