@@ -4,7 +4,7 @@
 
 import Link from 'next/link';
 import { Item } from '@prisma/client';
-import { Pencil } from 'lucide-react';
+import { Image as ImageIcon, Pencil } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { Badge, GlassCard, IconContainer } from '@/components/menarium';
 
@@ -13,6 +13,25 @@ interface ItemCardProps {
   currentUserId?: string | null;
   from?: 'my-items' | 'catalog';
   isDragging?: boolean;
+}
+
+function getPrimaryImage(rawImages: unknown): string {
+  if (Array.isArray(rawImages)) {
+    return typeof rawImages[0] === 'string' ? rawImages[0] : '';
+  }
+
+  if (typeof rawImages === 'string') {
+    try {
+      const parsed = JSON.parse(rawImages);
+      if (Array.isArray(parsed) && typeof parsed[0] === 'string') {
+        return parsed[0];
+      }
+    } catch {
+      return '';
+    }
+  }
+
+  return '';
 }
 
 export default function ItemCard({
@@ -49,13 +68,7 @@ export default function ItemCard({
   const url =
     from === 'my-items' ? `/item/${item.id}?from=my-items` : `/item/${item.id}`;
 
-  let image = '';
-  try {
-    const arr = JSON.parse(item.images);
-    if (Array.isArray(arr)) image = arr[0];
-  } catch {
-    image = '';
-  }
+  const image = getPrimaryImage((item as any).images);
 
   const isInDeal = item.status === 'IN_DEAL';
   const isArchived = item.status === 'ARCHIVED';
@@ -100,14 +113,18 @@ export default function ItemCard({
         onClick={handleClick}
         className="block"
       >
-        {image && (
+        {image ? (
           <img
             src={image}
             alt={item.title}
             className="h-48 w-full object-cover"
           />
+        ) : (
+          <div className="flex h-48 w-full items-center justify-center bg-white/5">
+            <ImageIcon className="size-7 text-muted-foreground/70" aria-hidden />
+          </div>
         )}
-        <div className="p-4">
+        <div className="min-h-[78px] p-4">
           <h3 className="truncate text-lg font-semibold text-foreground">{item.title}</h3>
           <p className="truncate text-sm text-muted-foreground">{item.description}</p>
         </div>
