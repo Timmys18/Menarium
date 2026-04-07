@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import Link from 'next/link';
+import { GlassCard, IconContainer, LinkButton } from '@/components/menarium';
 import { EmptyState } from '@/components/ui/empty-state';
 
 export default async function ProfilePage() {
@@ -34,62 +35,75 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 px-6 py-10 space-y-8">
+    <div className="min-h-screen bg-muted/20 px-6 py-10">
       {error && (
-        <div className="max-w-4xl mx-auto text-destructive text-sm">
+        <div className="mx-auto mb-6 max-w-4xl rounded-2xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
       )}
-      {/* Профиль */}
-      <div className="max-w-4xl mx-auto">
-        <div className="rounded-2xl bg-card border shadow-sm p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
+
+      <div className="mx-auto max-w-5xl space-y-8">
+        {/* Профиль */}
+        <GlassCard className="flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-xl font-bold text-primary">
-              {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'П'}
-            </div>
-            <div>
-              <div className="text-lg font-semibold">{user?.name || user?.email}</div>
-              <div className="text-sm text-muted-foreground">📍 {user?.city || 'Не указан'}</div>
+            <IconContainer variant="gradient" size="lg" className="rounded-full">
+              <span className="text-xl font-bold">
+                {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'П'}
+              </span>
+            </IconContainer>
+            <div className="space-y-1">
+              <div className="text-xl font-semibold tracking-tight">{user?.name || user?.email}</div>
+              <div className="text-sm text-muted-foreground">Город: {user?.city || 'Не указан'}</div>
+              <div className="text-sm text-muted-foreground">Email: {user?.email || 'Не указан'}</div>
             </div>
           </div>
-          <Link
-            href="/profile/edit"
-            className="text-sm font-medium text-primary hover:underline whitespace-nowrap"
-          >
+          <LinkButton href="/profile/edit" variant="secondary" className="sm:self-start">
             Редактировать профиль
+          </LinkButton>
+        </GlassCard>
+
+        {/* Ссылки на разделы */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Link href="/my-items">
+            <GlassCard
+              variant="hover"
+              className="h-full rounded-2xl p-6 transition-transform hover:-translate-y-0.5"
+            >
+              <h2 className="mb-1 text-lg font-semibold">Мои объявления</h2>
+              <p className="text-sm text-muted-foreground">Перейти к объявлениям</p>
+            </GlassCard>
+          </Link>
+
+          <Link href="/exchange">
+            <GlassCard
+              variant="hover"
+              className="h-full rounded-2xl p-6 transition-transform hover:-translate-y-0.5"
+            >
+              <h2 className="mb-1 text-lg font-semibold">Мои обмены</h2>
+              <p className="text-sm text-muted-foreground">Активные заявки на обмен</p>
+            </GlassCard>
+          </Link>
+
+          <Link href="/profile/chats">
+            <GlassCard
+              variant="hover"
+              className="h-full rounded-2xl p-6 transition-transform hover:-translate-y-0.5"
+            >
+              <h2 className="mb-1 text-lg font-semibold">Мои чаты</h2>
+              <p className="text-sm text-muted-foreground">Обсуждения по обменам</p>
+            </GlassCard>
+          </Link>
+
+          <Link href="/profile/edit">
+            <GlassCard
+              variant="hover"
+              className="h-full rounded-2xl p-6 transition-transform hover:-translate-y-0.5"
+            >
+              <h2 className="mb-1 text-lg font-semibold">Управление аккаунтом</h2>
+              <p className="text-sm text-muted-foreground">Настройки профиля</p>
+            </GlassCard>
           </Link>
         </div>
-      </div>
-
-      {/* Ссылки на разделы */}
-      <div className="max-w-4xl mx-auto space-y-4">
-        <Link href="/my-items">
-          <div className="rounded-xl bg-card border shadow-sm p-6 hover:bg-muted/50 transition">
-            <h2 className="text-lg font-semibold mb-1">Мои объявления</h2>
-            <p className="text-sm text-muted-foreground">Перейти к объявлениям</p>
-          </div>
-        </Link>
-
-        <Link href="/exchange">
-          <div className="rounded-xl bg-card border shadow-sm p-6 hover:bg-muted/50 transition">
-            <h2 className="text-lg font-semibold mb-1">Мои обмены</h2>
-            <p className="text-sm text-muted-foreground">Активные заявки на обмен</p>
-          </div>
-        </Link>
-
-        <Link href="/profile/chats">
-          <div className="rounded-xl bg-card border shadow-sm p-6 hover:bg-muted/50 transition">
-            <h2 className="text-lg font-semibold mb-1">Мои чаты</h2>
-            <p className="text-sm text-muted-foreground">Обсуждения по обменам</p>
-          </div>
-        </Link>
-
-        <Link href="/profile/edit">
-          <div className="rounded-xl bg-card border shadow-sm p-6 hover:bg-muted/50 transition">
-            <h2 className="text-lg font-semibold mb-1">Управление аккаунтом</h2>
-            <p className="text-sm text-muted-foreground">Настройки профиля</p>
-          </div>
-        </Link>
       </div>
     </div>
   );
