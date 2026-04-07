@@ -3,13 +3,17 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import ItemCard from '@/components/ItemCard';
-import { Button } from '@/components/ui/button';
+import { Badge, Button as MButton, GlassCard } from '@/components/menarium';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { EmptyState } from '@/components/ui/empty-state';
 import { CatalogGridSkeleton } from '@/components/ui/skeletons';
 import { apiGet } from '@/lib/api';
 import { pickArray } from '@/lib/guards';
+import { cn } from '@/lib/utils';
+
+const filterTriggerClass =
+  "h-9 border-white/10 bg-white/5 text-foreground shadow-none backdrop-blur-xl hover:bg-white/10 focus:ring-menarium-purple/40";
 
 const categories = [
   { value: "FURNITURE", label: "Мебель" },
@@ -142,12 +146,19 @@ export default function CatalogPage() {
   const safeItems = Array.isArray(items) ? items : [];
 
   return (
-    <div className="max-w-6xl mx-auto px-2 py-4 space-y-4">
-      <h1 className="text-2xl font-bold mb-2">Каталог объявлений</h1>
-      {/* Фильтры */}
-      <div className="flex flex-wrap gap-2 items-center bg-white rounded-xl p-3 shadow-sm">
+    <div className="container mx-auto max-w-6xl space-y-6 px-4 py-8">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
+          Каталог <span className="gradient-text-brand">объявлений</span>
+        </h1>
+        <p className="text-sm text-muted-foreground md:text-base">
+          Найдите вещи и услуги для обмена по фильтрам ниже
+        </p>
+      </div>
+      {/* Фильтры — только визуальная оболочка; логика без изменений */}
+      <GlassCard className="flex flex-wrap items-center gap-2 p-4 md:gap-3">
         <Select value={type} onValueChange={(v) => updateFilters({ type: v })}>
-          <SelectTrigger className="w-32">
+          <SelectTrigger className={cn("w-32", filterTriggerClass)}>
             <SelectValue placeholder="Тип" />
           </SelectTrigger>
           <SelectContent>
@@ -157,7 +168,7 @@ export default function CatalogPage() {
           </SelectContent>
         </Select>
         <Select value={category} onValueChange={(v) => updateFilters({ category: v })}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className={cn("w-40", filterTriggerClass)}>
             <SelectValue placeholder="Категория" />
           </SelectTrigger>
           <SelectContent>
@@ -167,7 +178,7 @@ export default function CatalogPage() {
           </SelectContent>
         </Select>
         <Select value={city} onValueChange={(v) => updateFilters({ city: v })}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className={cn("w-40", filterTriggerClass)}>
             <SelectValue placeholder="Город" />
           </SelectTrigger>
           <SelectContent>
@@ -176,12 +187,14 @@ export default function CatalogPage() {
             ))}
           </SelectContent>
         </Select>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-2 py-1.5">
           <Checkbox id="acceptsAnything" checked={acceptsAnything} onCheckedChange={(v) => updateFilters({ acceptsAnything: !!v })} />
-          <label htmlFor="acceptsAnything" className="text-sm">Готов на всё</label>
+          <label htmlFor="acceptsAnything" className="cursor-pointer text-sm text-muted-foreground">
+            Готов на всё
+          </label>
         </div>
         <Select value={sort} onValueChange={(v) => updateFilters({ sort: v })}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className={cn("w-40 min-w-[10rem]", filterTriggerClass)}>
             <SelectValue placeholder="Сортировка" />
           </SelectTrigger>
           <SelectContent>
@@ -190,35 +203,45 @@ export default function CatalogPage() {
             ))}
           </SelectContent>
         </Select>
-        <Button variant="outline" size="sm" onClick={resetFilters} className="ml-auto">Сбросить</Button>
-      </div>
+        <MButton
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={resetFilters}
+          className="ml-auto shrink-0"
+        >
+          Сбросить
+        </MButton>
+      </GlassCard>
       {/* Плашки выбранных фильтров */}
       {activeFilters.length > 0 && (
-        <div className="flex flex-wrap gap-2 items-center text-xs text-blue-700">
+        <div className="flex flex-wrap items-center gap-2">
           {activeFilters.map((f, i) => (
-            <span key={i} className="bg-blue-100 rounded px-2 py-1">{f}</span>
+            <Badge key={i} variant="default" className="max-w-full truncate">
+              {f}
+            </Badge>
           ))}
         </div>
       )}
       {/* Число найденных результатов */}
-      <div className="text-sm text-slate-500 mb-2">
+      <div className="text-sm text-muted-foreground">
         Найдено: {typeof total === "number" ? total : safeItems.length} объявлений
       </div>
       {/* Список объявлений */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 md:gap-6">
         {loading ? (
           <CatalogGridSkeleton count={6} />
         ) : errorMessage ? (
-          <div className="col-span-full">
+          <GlassCard className="col-span-full p-6 md:p-8">
             <EmptyState
               title="Не удалось загрузить объявления"
               description={errorDetails ?? "Попробуйте обновить страницу."}
               actionLabel="Обновить"
               onAction={() => window.location.reload()}
             />
-          </div>
+          </GlassCard>
         ) : safeItems.length === 0 ? (
-          <div className="col-span-full">
+          <GlassCard className="col-span-full p-6 md:p-8">
             <EmptyState
               title={type || category || city || acceptsAnything ? "Нет объявлений по выбранным фильтрам" : "Нет объявлений"}
               description={type || category || city || acceptsAnything ? "Измените фильтры или сбросьте их." : "Создайте первое объявление или зайдите позже."}
@@ -226,7 +249,7 @@ export default function CatalogPage() {
               onAction={type || category || city || acceptsAnything ? resetFilters : undefined}
               actionHref={!type && !category && !city && !acceptsAnything ? "/new" : undefined}
             />
-          </div>
+          </GlassCard>
         ) : (
           safeItems.map((item) => (
             <ItemCard key={item.id} item={item} from="catalog" />
