@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
+import { Badge, Button, GlassCard, Input } from '@/components/menarium';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ItemPageSkeleton } from '@/components/ui/skeletons';
 import { useSession } from 'next-auth/react';
@@ -237,7 +237,7 @@ export default function ItemPage({ params }: ItemPageProps) {
 
   if (status === 'not-found') {
     return (
-      <div className="max-w-6xl mx-auto px-6 py-10">
+      <div className="container mx-auto max-w-6xl px-6 py-10">
         <EmptyState
           title="Объявление не найдено"
           description="Возможно, оно было удалено или ссылка устарела."
@@ -250,7 +250,7 @@ export default function ItemPage({ params }: ItemPageProps) {
 
   if (status === 'error') {
     return (
-      <div className="max-w-6xl mx-auto px-6 py-10">
+      <div className="container mx-auto max-w-6xl px-6 py-10">
         <EmptyState
           title="Не удалось загрузить объявление"
           description="Попробуйте обновить страницу или перейти в каталог."
@@ -270,25 +270,25 @@ export default function ItemPage({ params }: ItemPageProps) {
     : [];
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+    <div className="container mx-auto max-w-6xl space-y-8 px-6 py-10">
       <button
         onClick={() => {
           if (from === 'my-items') router.push('/my-items');
           else router.push('/catalog');
         }}
-        className="text-blue-600 hover:underline text-sm"
+        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         ← {from === 'my-items' ? 'Назад к объявлениям' : 'Назад к каталогу'}
       </button>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
         {/* Фотоблок */}
-        <div className="space-y-4">
+        <GlassCard className="space-y-4 p-4 sm:p-5">
           {selectedImage && (
             <img
               src={selectedImage}
               alt="Главное изображение"
-              className="w-full max-h-[500px] object-contain rounded-xl cursor-pointer"
+              className="w-full max-h-[500px] cursor-pointer rounded-2xl border border-white/10 bg-black/20 object-contain"
               onClick={() => setFullscreen(true)}
             />
           )}
@@ -301,29 +301,36 @@ export default function ItemPage({ params }: ItemPageProps) {
                 alt={`Фото ${index + 1}`}
                 onClick={() => setSelectedIndex(index)}
                 className={cn(
-                  'h-20 w-20 object-cover rounded-md cursor-pointer transition border',
-                  index === selectedIndex ? 'border-blue-600' : 'border-transparent'
+                  'h-20 w-20 shrink-0 cursor-pointer rounded-xl border object-cover transition',
+                  index === selectedIndex
+                    ? 'border-menarium-purple shadow-glow-purple'
+                    : 'border-white/10 opacity-80 hover:opacity-100'
                 )}
               />
             ))}
           </div>
-        </div>
+        </GlassCard>
 
         {/* Контент */}
-        <div className="space-y-4 text-sm text-slate-700">
-          <h1 className="text-2xl font-bold">{item.title}</h1>
+        <GlassCard className="space-y-5 p-5 text-sm text-foreground sm:p-6">
+          <div className="space-y-3">
+            <Badge variant="gradient" className="w-fit">Объявление</Badge>
+            <h1 className="text-2xl font-bold tracking-tight">{item.title}</h1>
+          </div>
 
-          <p><span className="font-semibold">Тип:</span> {typeLabels[item.type] || 'Не указан'}</p>
-          <p><span className="font-semibold">Категория:</span> {categoryLabels[item.category] || 'Не указана'}</p>
-          <p><span className="font-semibold">Город:</span> {item.city || 'Не указан'}</p>
+          <div className="space-y-2 text-muted-foreground">
+            <p><span className="font-semibold text-foreground">Тип:</span> {typeLabels[item.type] || 'Не указан'}</p>
+            <p><span className="font-semibold text-foreground">Категория:</span> {categoryLabels[item.category] || 'Не указана'}</p>
+            <p><span className="font-semibold text-foreground">Город:</span> {item.city || 'Не указан'}</p>
+          </div>
 
-          <div className="pt-2 text-base text-black leading-relaxed">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-base leading-relaxed text-foreground">
             {item.description?.trim() || 'Без описания'}
           </div>
 
-          <div className="mt-4">
-            <p className="font-semibold mb-1">Желаемые категории обмена:</p>
-            <p>
+          <div>
+            <p className="mb-1 font-semibold">Желаемые категории обмена:</p>
+            <p className="text-muted-foreground">
               {item.acceptsAnything && desired.length === 0
                 ? 'Рассмотрю любые варианты'
                 : desired.length > 0
@@ -333,9 +340,9 @@ export default function ItemPage({ params }: ItemPageProps) {
           </div>
 
           {item.userId !== session?.user?.id && (
-            <div className="mt-4">
+            <div className="pt-1">
               <Button
-                variant="outline"
+                variant="secondary"
                 className="w-full sm:w-auto"
                 onClick={() => {
                   if (!session?.user?.id) {
@@ -351,7 +358,7 @@ export default function ItemPage({ params }: ItemPageProps) {
           )}
 
           {item.status !== 'ACTIVE' ? (
-            <div className="mt-6 rounded-xl bg-slate-100 text-slate-600 text-sm px-4 py-3">
+            <div className="mt-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-muted-foreground">
               {item.status === 'IN_DEAL'
                 ? 'Объявление участвует в сделке.'
                 : 'Объявление завершено.'}
@@ -359,14 +366,16 @@ export default function ItemPage({ params }: ItemPageProps) {
           ) : (
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <button
-                  className="mt-6 bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-xl transition"
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="mt-2"
                   onClick={() => setOpen(true)}
                 >
                   💬 Предложить обмен
-                </button>
+                </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="glass-card rounded-3xl border border-white/10 bg-background/95 text-foreground">
                 <DialogHeader>
                   <DialogTitle>Выберите своё объявление для обмена</DialogTitle>
                 </DialogHeader>
@@ -383,25 +392,27 @@ export default function ItemPage({ params }: ItemPageProps) {
                   </SelectContent>
                 </Select>
                 <DialogFooter>
-                  <Button onClick={handleExchange} disabled={!selectedMyItem || exchangeLoading}>
+                  <Button variant="primary" size="sm" onClick={handleExchange} disabled={!selectedMyItem || exchangeLoading}>
                     {exchangeLoading ? 'Отправка...' : 'Отправить предложение'}
                   </Button>
                 </DialogFooter>
-                {exchangeStatus && <div className="text-sm text-blue-600 mt-2">{exchangeStatus}</div>}
+                {exchangeStatus && (
+                  <div className="mt-2 text-sm text-muted-foreground">{exchangeStatus}</div>
+                )}
               </DialogContent>
             </Dialog>
           )}
 
           {/* Модалка чата с владельцем */}
           <Dialog open={chatOpen} onOpenChange={(open) => { setChatOpen(open); if (!open) setThreadId(null); setMessages([]); setChatError(null); }}>
-            <DialogContent className="max-w-md max-h-[80vh] flex flex-col">
+            <DialogContent className="glass-card flex max-h-[80vh] max-w-md flex-col rounded-3xl border border-white/10 bg-background/95 text-foreground">
               <DialogHeader>
                 <DialogTitle>Чат с владельцем</DialogTitle>
               </DialogHeader>
               <div className="flex-1 min-h-0 flex flex-col gap-2">
-                <div className="flex-1 overflow-y-auto border rounded-lg p-3 bg-slate-50 min-h-[200px] space-y-2">
+                <div className="min-h-[200px] flex-1 space-y-2 overflow-y-auto rounded-2xl border border-white/10 bg-white/5 p-3">
                   {messages.length === 0 && !chatError && (
-                    <p className="text-sm text-slate-500">Сообщений пока нет. Напишите первым.</p>
+                    <p className="text-sm text-muted-foreground">Сообщений пока нет. Напишите первым.</p>
                   )}
                   {messages.map((m) => (
                     <div
@@ -409,46 +420,46 @@ export default function ItemPage({ params }: ItemPageProps) {
                       className={cn(
                         'text-sm p-2 rounded-lg max-w-[85%]',
                         m.senderUserId === session?.user?.id
-                          ? 'ml-auto bg-blue-100 text-blue-900'
-                          : 'mr-auto bg-slate-200 text-slate-800'
+                          ? 'ml-auto border border-menarium-purple/40 bg-menarium-purple/20 text-foreground'
+                          : 'mr-auto border border-white/10 bg-white/10 text-foreground'
                       )}
                     >
                       {m.text}
-                      <div className="text-xs text-slate-500 mt-0.5">{new Date(m.createdAt).toLocaleTimeString()}</div>
+                      <div className="mt-0.5 text-xs text-muted-foreground">{new Date(m.createdAt).toLocaleTimeString()}</div>
                     </div>
                   ))}
                   <div ref={messagesEndRef} />
                 </div>
-                {chatError && <p className="text-sm text-red-600">{chatError}</p>}
+                {chatError && <p className="text-sm text-destructive">{chatError}</p>}
                 <div className="flex gap-2">
-                  <input
+                  <Input
                     type="text"
-                    className="flex-1 border rounded-lg px-3 py-2 text-sm"
+                    className="text-sm"
                     placeholder="Введите сообщение..."
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && sendChatMessage()}
                   />
-                  <Button onClick={sendChatMessage} disabled={!chatInput.trim() || chatSendLoading}>
+                  <Button variant="primary" size="sm" onClick={sendChatMessage} disabled={!chatInput.trim() || chatSendLoading}>
                     {chatSendLoading ? '…' : 'Отправить'}
                   </Button>
                 </div>
               </div>
             </DialogContent>
           </Dialog>
-        </div>
+        </GlassCard>
       </div>
 
       {/* Полноэкранное фото */}
       {fullscreen && selectedImage && (
         <div
-          className="fixed inset-0 z-[9999] backdrop-blur-lg bg-white/10 flex items-center justify-center"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/70 backdrop-blur-lg"
           onClick={() => setFullscreen(false)}
         >
           <img
             src={selectedImage}
             alt="Просмотр"
-            className="max-w-full max-h-[90vh] rounded-xl"
+            className="max-h-[90vh] max-w-full rounded-2xl border border-white/20 bg-black/20"
             onClick={(e) => e.stopPropagation()}
           />
         </div>
