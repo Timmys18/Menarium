@@ -240,11 +240,11 @@ export default function CatalogPage() {
         {isRefreshing && (
           <div className="pointer-events-none absolute inset-0 z-10 rounded-3xl bg-background/35 backdrop-blur-[1px]" />
         )}
-        <div className={cn("grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 md:gap-6", isRefreshing && "opacity-85 transition-opacity")}>
-          {loading && !hasLoadedOnce ? (
-            <CatalogGridSkeleton count={6} />
-          ) : errorMessage ? (
-          <GlassCard className="col-span-full p-6 md:p-8">
+
+        {loading && !hasLoadedOnce ? (
+          <CatalogGridSkeleton count={6} />
+        ) : errorMessage ? (
+          <GlassCard className="flex min-h-[340px] items-center justify-center p-6 md:p-8">
             <EmptyState
               title="Не удалось загрузить объявления"
               description={errorDetails ?? "Попробуйте обновить страницу."}
@@ -253,7 +253,7 @@ export default function CatalogPage() {
             />
           </GlassCard>
         ) : safeItems.length === 0 ? (
-          <GlassCard className="col-span-full p-6 md:p-8">
+          <GlassCard className="flex min-h-[340px] items-center justify-center p-6 md:p-8">
             <EmptyState
               title={type || category || city || acceptsAnything ? "Нет объявлений по выбранным фильтрам" : "Нет объявлений"}
               description={type || category || city || acceptsAnything ? "Измените фильтры или сбросьте их." : "Создайте первое объявление или зайдите позже."}
@@ -262,12 +262,18 @@ export default function CatalogPage() {
               actionHref={!type && !category && !city && !acceptsAnything ? "/new" : undefined}
             />
           </GlassCard>
-          ) : (
-            safeItems.map((item) => (
+        ) : (
+          <div
+            className={cn(
+              "grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 md:gap-6",
+              isRefreshing && "opacity-85 transition-opacity"
+            )}
+          >
+            {safeItems.map((item) => (
               <ItemCard key={item.id} item={item} from="catalog" />
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
