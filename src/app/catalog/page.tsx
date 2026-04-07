@@ -59,6 +59,8 @@ export default function CatalogPage() {
 
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
   const [total, setTotal] = useState<number | null>(null);
@@ -78,19 +80,23 @@ export default function CatalogPage() {
       if (next[k as keyof typeof next] === undefined || next[k as keyof typeof next] === "") delete next[k as keyof typeof next];
     });
     const query = getQueryString(next);
-    router.replace(`/catalog${query ? `?${query}` : ""}`);
+    router.replace(`/catalog${query ? `?${query}` : ""}`, { scroll: false });
     // Обновляем локальное состояние
-    if (newFilters.type !== undefined) setType(newFilters.type);
-    if (newFilters.category !== undefined) setCategory(newFilters.category);
-    if (newFilters.city !== undefined) setCity(newFilters.city);
-    if (newFilters.acceptsAnything !== undefined) setAcceptsAnything(newFilters.acceptsAnything);
-    if (newFilters.sort !== undefined) setSort(newFilters.sort);
+    if (newFilters.type !== undefined && newFilters.type !== type) setType(newFilters.type);
+    if (newFilters.category !== undefined && newFilters.category !== category) setCategory(newFilters.category);
+    if (newFilters.city !== undefined && newFilters.city !== city) setCity(newFilters.city);
+    if (newFilters.acceptsAnything !== undefined && newFilters.acceptsAnything !== acceptsAnything) {
+      setAcceptsAnything(newFilters.acceptsAnything);
+    }
+    if (newFilters.sort !== undefined && newFilters.sort !== sort) setSort(newFilters.sort);
   }
 
   // Получение объявлений с фильтрами
   useEffect(() => {
     const fetchItems = async () => {
+      const hasCurrentItems = items.length > 0;
       setLoading(true);
+      setIsRefreshing(hasCurrentItems);
       setErrorMessage(null);
       setErrorDetails(null);
 
@@ -119,6 +125,8 @@ export default function CatalogPage() {
         setTotal(0);
       } finally {
         setLoading(false);
+        setIsRefreshing(false);
+        setHasLoadedOnce(true);
       }
     };
 
@@ -132,7 +140,7 @@ export default function CatalogPage() {
     setCity(undefined);
     setAcceptsAnything(false);
     setSort("createdAt_desc");
-    router.replace("/catalog");
+    router.replace("/catalog", { scroll: false });
   }
 
   // Плашки выбранных фильтров
@@ -228,10 +236,14 @@ export default function CatalogPage() {
         Найдено: {typeof total === "number" ? total : safeItems.length} объявлений
       </div>
       {/* Список объявлений */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 md:gap-6">
-        {loading ? (
-          <CatalogGridSkeleton count={6} />
-        ) : errorMessage ? (
+      <div className="relative min-h-[440px]">
+        {isRefreshing && (
+          <div className="pointer-events-none absolute inset-0 z-10 rounded-3xl bg-background/35 backdrop-blur-[1px]" />
+        )}
+        <div className={cn("grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 md:gap-6", isRefreshing && "opacity-85 transition-opacity")}>
+          {loading && !hasLoadedOnce ? (
+            <CatalogGridSkeleton count={6} />
+          ) : errorMessage ? (
           <GlassCard className="col-span-full p-6 md:p-8">
             <EmptyState
               title="Не удалось загрузить объявления"
@@ -250,11 +262,12 @@ export default function CatalogPage() {
               actionHref={!type && !category && !city && !acceptsAnything ? "/new" : undefined}
             />
           </GlassCard>
-        ) : (
-          safeItems.map((item) => (
-            <ItemCard key={item.id} item={item} from="catalog" />
-          ))
-        )}
+          ) : (
+            safeItems.map((item) => (
+              <ItemCard key={item.id} item={item} from="catalog" />
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

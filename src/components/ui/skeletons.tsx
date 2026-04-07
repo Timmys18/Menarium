@@ -2,11 +2,11 @@ import { Skeleton } from "./skeleton";
 
 export function CatalogCardSkeleton() {
   return (
-    <div className="border rounded-xl bg-card overflow-hidden">
-      <Skeleton className="w-full h-48 rounded-none" />
+    <div className="glass-card overflow-hidden rounded-3xl border border-white/10">
+      <Skeleton className="h-48 w-full rounded-none" />
       <div className="p-4 space-y-2">
-        <Skeleton className="h-5 w-3/4" />
-        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-6 w-3/4 rounded-md" />
+        <Skeleton className="h-4 w-full rounded-md" />
       </div>
     </div>
   );
@@ -14,7 +14,7 @@ export function CatalogCardSkeleton() {
 
 export function CatalogGridSkeleton({ count = 6 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 md:gap-6">
       {Array.from({ length: count }).map((_, i) => (
         <CatalogCardSkeleton key={i} />
       ))}
