@@ -73,12 +73,12 @@ export function ExchangeCardSkeleton() {
 
 export function SwipeCardSkeleton() {
   return (
-    <div className="w-full max-w-md rounded-3xl overflow-hidden border bg-card shadow-xl">
-      <Skeleton className="w-full h-64 rounded-none" />
-      <div className="p-4 space-y-2">
-        <Skeleton className="h-6 w-3/4" />
-        <Skeleton className="h-4 w-1/3" />
-        <Skeleton className="h-4 w-1/2" />
+    <div className="glass-card w-full max-w-md overflow-hidden rounded-3xl border border-white/10">
+      <Skeleton className="h-64 w-full rounded-none bg-white/10" />
+      <div className="space-y-2 p-4">
+        <Skeleton className="h-6 w-3/4 rounded-md bg-white/10" />
+        <Skeleton className="h-4 w-1/3 rounded-md bg-white/10" />
+        <Skeleton className="h-4 w-1/2 rounded-md bg-white/10" />
       </div>
     </div>
   );
