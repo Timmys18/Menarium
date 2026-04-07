@@ -9,7 +9,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Plus } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 
 interface ImageUploadProps {
@@ -75,12 +75,14 @@ export default function ImageUpload({ value, onChange, setLoading }: ImageUpload
 
   return (
     <div className="space-y-2">
-      <label className="block font-medium text-sm text-gray-700">{"\u0418\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u044f"}</label>
+      <label className="block text-sm font-medium text-foreground">{"\u0418\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u044f"}</label>
 
       <div
         {...getRootProps()}
-        className={`flex items-center justify-center border border-dashed w-full h-32 rounded-xl bg-gray-50 hover:border-blue-500 transition text-muted-foreground ${
-          isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-400'
+        className={`glass-card flex h-32 w-full items-center justify-center rounded-2xl border border-dashed text-muted-foreground transition ${
+          isDragActive
+            ? 'border-menarium-purple bg-menarium-purple/10'
+            : 'border-white/20 bg-white/5 hover:border-menarium-purple/60'
         }`}
       >
         <input {...getInputProps()} />
@@ -94,15 +96,21 @@ export default function ImageUpload({ value, onChange, setLoading }: ImageUpload
         <SortableContext items={value} strategy={verticalListSortingStrategy}>
           <div className="grid grid-cols-3 gap-2 mt-2">
             {value.map((url, idx) => (
-              <SortableImage key={url} id={url} url={url} isMain={idx === 0} />
+              <SortableImage
+                key={url}
+                id={url}
+                url={url}
+                isMain={idx === 0}
+                onRemove={() => onChange(value.filter((u) => u !== url))}
+              />
             ))}
           </div>
         </SortableContext>
       </DndContext>
 
-      {uploadError && <p className="text-sm text-red-600 mt-1">{uploadError}</p>}
+      {uploadError && <p className="mt-1 text-sm text-destructive">{uploadError}</p>}
       {(localLoading || value.length === 0) && (
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="mt-1 text-sm text-muted-foreground">
           {localLoading ? "\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430..." : "\u0418\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u044f \u043f\u043e\u043a\u0430 \u043d\u0435 \u0434\u043e\u0431\u0430\u0432\u043b\u0435\u043d\u044b"}
         </p>
       )}
@@ -114,10 +122,12 @@ function SortableImage({
   id,
   url,
   isMain,
+  onRemove,
 }: {
   id: string;
   url: string;
   isMain: boolean;
+  onRemove: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
 
@@ -131,13 +141,25 @@ function SortableImage({
       <img
         src={url}
         alt="uploaded"
-        className="aspect-square object-cover rounded-lg border"
+        className="aspect-square rounded-xl border border-white/10 object-cover"
       />
       {isMain && (
-        <span className="absolute bottom-1 left-1 text-xs bg-blue-600 text-white px-2 py-1 rounded">
+        <span className="absolute bottom-1 left-1 rounded bg-menarium-purple px-2 py-1 text-xs text-white">
           {"\u0413\u043b\u0430\u0432\u043d\u043e\u0435"}
         </span>
       )}
+      <button
+        type="button"
+        aria-label="Удалить изображение"
+        className="absolute right-1 top-1 flex size-7 items-center justify-center rounded-lg border border-white/15 bg-black/60 text-white backdrop-blur-sm transition hover:bg-destructive/90 hover:border-destructive/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-menarium-purple/50"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+      >
+        <X className="size-3.5" aria-hidden />
+      </button>
     </div>
   );
 }

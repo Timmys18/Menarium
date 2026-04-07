@@ -5,8 +5,11 @@ import { useRouter } from 'next/navigation';
 import { Item } from '@prisma/client';
 import ImageUpload from '@/components/ImageUpload';
 import { ThingCategoryLabels, ServiceCategoryLabels } from '@/lib/category-labels';
-import { Button } from '@/components/ui/button';
+import { Button, Input } from '@/components/menarium';
+import { ItemFormLayout } from '@/components/forms/ItemFormLayout';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 interface EditItemFormProps {
   initialData: Item;
@@ -88,85 +91,112 @@ export default function EditItemForm({ initialData }: EditItemFormProps) {
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold">Редактировать объявление</h1>
+    <form onSubmit={handleSubmit} className="mx-auto max-w-3xl">
+      <ItemFormLayout
+        topSlot={
+          <h1 className="text-3xl font-bold tracking-tight">Редактировать объявление</h1>
+        }
+        typeCategorySection={
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="edit-type">Тип</Label>
+              <select
+                id="edit-type"
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+                className="h-10 w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-foreground backdrop-blur-xl outline-none focus:ring-2 focus:ring-menarium-purple/40"
+              >
+                <option value="THING">Вещь</option>
+                <option value="SERVICE">Услуга</option>
+              </select>
+            </div>
 
-      <input
-        type="text"
-        placeholder="Заголовок"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        className="w-full px-4 py-2 border rounded bg-white text-black"
-      />
-
-      <textarea
-        placeholder="Описание"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        className="w-full px-4 py-2 border rounded bg-white text-black"
-      />
-
-      <input
-        type="text"
-        placeholder="Город"
-        value={city}
-        onChange={(e) => setCity(e.target.value)}
-        className="w-full px-4 py-2 border rounded bg-white text-black"
-      />
-
-      <select
-        value={type}
-        onChange={(e) => setType(e.target.value)}
-        className="w-full px-4 py-2 border rounded bg-white text-black"
-      >
-        <option value="THING">Вещь</option>
-        <option value="SERVICE">Услуга</option>
-      </select>
-
-      <select
-        value={category}
-        onChange={(e) => setCategory(e.target.value)}
-        className="w-full px-4 py-2 border rounded bg-white text-black"
-      >
-        {categories.map(([key, label]) => (
-          <option key={key} value={key}>
-            {label}
-          </option>
-        ))}
-      </select>
-
-      <div className="flex items-center gap-2">
-        <Checkbox
-          checked={acceptsAnything}
-          onCheckedChange={(checked) => setAcceptsAnything(!!checked)}
-        />
-        <span className="text-sm text-muted-foreground">Рассмотрю любые варианты</span>
-      </div>
-
-      <div>
-        <p className="font-semibold mb-2">Желаемые категории обмена</p>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          {exchangeOptions.map((label) => (
-            <label key={label} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={desiredCategories.includes(label)}
-                onChange={() => handleCategoryToggle(label)}
+            <div className="space-y-2">
+              <Label htmlFor="edit-category">Категория</Label>
+              <select
+                id="edit-category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="h-10 w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-foreground backdrop-blur-xl outline-none focus:ring-2 focus:ring-menarium-purple/40"
+              >
+                {categories.map(([key, label]) => (
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </>
+        }
+        titleField={
+          <Input
+            type="text"
+            label="Заголовок"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        }
+        descriptionField={
+          <div className="space-y-2">
+            <Label htmlFor="edit-description">Описание</Label>
+            <Textarea
+              id="edit-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="min-h-[120px] rounded-2xl border-white/10 bg-white/5 text-sm text-foreground backdrop-blur-xl focus-visible:ring-menarium-purple/40"
+            />
+          </div>
+        }
+        cityField={
+          <Input
+            type="text"
+            label="Город"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+          />
+        }
+        secondaryCardChildren={
+          <>
+            <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
+              <Checkbox
+                checked={acceptsAnything}
+                onCheckedChange={(checked) => setAcceptsAnything(!!checked)}
               />
-              {label}
-            </label>
-          ))}
-        </div>
-      </div>
+              <span className="text-sm text-muted-foreground">Рассмотрю любые варианты</span>
+            </div>
 
-      <ImageUpload value={images} onChange={setImages} />
+            <div>
+              <p className="mb-2 font-semibold">Желаемые категории обмена</p>
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+                {exchangeOptions.map((label) => (
+                  <label
+                    key={label}
+                    className="flex items-center gap-2 text-sm text-muted-foreground"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={desiredCategories.includes(label)}
+                      onChange={() => handleCategoryToggle(label)}
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </div>
 
-      <div className="flex gap-4">
-        <Button type="submit">Сохранить</Button>
-        <Button type="button" variant="destructive" onClick={handleDelete}>
-          Удалить
-        </Button>
-      </div>
+            <ImageUpload value={images} onChange={setImages} />
+
+            <div className="flex flex-wrap gap-3">
+              <Button type="submit" variant="primary" size="sm">
+                Сохранить
+              </Button>
+              <Button type="button" variant="secondary" size="sm" onClick={handleDelete}>
+                Удалить
+              </Button>
+            </div>
+          </>
+        }
+      />
     </form>
   );
 }

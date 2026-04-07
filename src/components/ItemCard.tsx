@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Item } from '@prisma/client';
 import { Image as ImageIcon, Pencil } from 'lucide-react';
 import { useEffect, useRef } from 'react';
-import { Badge, GlassCard, IconContainer } from '@/components/menarium';
+import { Badge, GlassCard } from '@/components/menarium';
 
 interface ItemCardProps {
   item: Item;
@@ -93,25 +93,12 @@ export default function ItemCard({
         </div>
       )}
 
-      {isOwner && !isInDeal && !isArchived && (
-        <Link
-          href={`/item/${item.id}/edit`}
-          className="absolute right-2 top-2 z-10 rounded-full p-0.5 transition hover:scale-105"
-          title="Редактировать"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <IconContainer size="sm" variant="glass">
-            <Pencil className="text-primary" aria-hidden />
-          </IconContainer>
-        </Link>
-      )}
-
       <Link
         href={url}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onClick={handleClick}
-        className="block"
+        className="relative z-0 block"
       >
         {image ? (
           <img
@@ -129,6 +116,18 @@ export default function ItemCard({
           <p className="truncate text-sm text-muted-foreground">{item.description}</p>
         </div>
       </Link>
+
+      {isOwner && !isInDeal && !isArchived && (
+        <Link
+          href={`/item/${item.id}/edit`}
+          className="absolute right-2 top-2 z-30 flex size-10 items-center justify-center rounded-xl border-2 border-black bg-white/12 text-brand-blue shadow-[0_4px_20px_rgba(0,0,0,0.55),0_0_0_1px_rgba(255,255,255,0.12)_inset] backdrop-blur-xl backdrop-saturate-150 transition hover:bg-white/18 hover:text-brand-blue-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          title="Редактировать"
+          onClick={(e) => e.stopPropagation()}
+          aria-label="Редактировать объявление"
+        >
+          <Pencil className="size-[18px] shrink-0 text-brand-blue" strokeWidth={2.5} aria-hidden />
+        </Link>
+      )}
     </GlassCard>
   );
 }
