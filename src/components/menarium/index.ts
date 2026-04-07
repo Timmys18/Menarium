@@ -1,4 +1,5 @@
 export { Button } from "./Button";
+export { LinkButton } from "./LinkButton";
 export { GlassCard } from "./GlassCard";
 export { Input } from "./Input";
 export { Badge } from "./Badge";
