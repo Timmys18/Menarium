@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       id?: { notIn: string[] };
       type?: string;
       category?: string;
-      city?: string;
+      city?: string | { equals: string; mode: 'insensitive' };
     } = {
       status: 'ACTIVE',
       userId: { not: session.user.id },
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     if (alreadyProposedIds.length > 0) where.id = { notIn: alreadyProposedIds };
     if (type) where.type = type;
     if (category) where.category = category;
-    if (city) where.city = city;
+    if (city) where.city = { equals: city, mode: 'insensitive' };
 
     const [items, total] = await Promise.all([
       prisma.item.findMany({

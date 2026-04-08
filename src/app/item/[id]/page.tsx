@@ -60,6 +60,7 @@ export default function ItemPage({ params }: ItemPageProps) {
   const [myItems, setMyItems] = useState<any[]>([]);
   const [selectedMyItem, setSelectedMyItem] = useState<string | undefined>();
   const [exchangeStatus, setExchangeStatus] = useState<string | null>(null);
+  const [exchangeStatusType, setExchangeStatusType] = useState<'success' | 'error' | null>(null);
   const [exchangeLoading, setExchangeLoading] = useState(false);
 
   // Чат с владельцем
@@ -121,6 +122,7 @@ export default function ItemPage({ params }: ItemPageProps) {
           if (!res.ok) {
             setMyItems([]);
             setExchangeStatus('Не удалось загрузить данные. Попробуйте обновить страницу.');
+            setExchangeStatusType('error');
             return;
           }
           const data = await res.json();
@@ -129,6 +131,7 @@ export default function ItemPage({ params }: ItemPageProps) {
         .catch(() => {
           setMyItems([]);
           setExchangeStatus('Не удалось загрузить данные. Попробуйте обновить страницу.');
+          setExchangeStatusType('error');
         });
     }
   }, [open, session]);
@@ -216,6 +219,7 @@ export default function ItemPage({ params }: ItemPageProps) {
     if (!selectedMyItem) return;
     setExchangeLoading(true);
     setExchangeStatus(null);
+    setExchangeStatusType(null);
     const res = await fetch('/api/exchange', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -224,9 +228,11 @@ export default function ItemPage({ params }: ItemPageProps) {
     const data = await res.json();
     if (res.ok) {
       setExchangeStatus('Предложение отправлено!');
+      setExchangeStatusType('success');
       setOpen(false);
     } else {
       setExchangeStatus(data.error || 'Ошибка');
+      setExchangeStatusType('error');
     }
     setExchangeLoading(false);
   }
@@ -238,12 +244,14 @@ export default function ItemPage({ params }: ItemPageProps) {
   if (status === 'not-found') {
     return (
       <div className="container mx-auto max-w-6xl px-6 py-10">
-        <EmptyState
-          title="Объявление не найдено"
-          description="Возможно, оно было удалено или ссылка устарела."
-          actionLabel="В каталог"
-          actionHref="/catalog"
-        />
+        <GlassCard className="p-6 md:p-8">
+          <EmptyState
+            title="Объявление не найдено"
+            description="Возможно, оно было удалено или ссылка устарела."
+            actionLabel="В каталог"
+            actionHref="/catalog"
+          />
+        </GlassCard>
       </div>
     );
   }
@@ -251,12 +259,14 @@ export default function ItemPage({ params }: ItemPageProps) {
   if (status === 'error') {
     return (
       <div className="container mx-auto max-w-6xl px-6 py-10">
-        <EmptyState
-          title="Не удалось загрузить объявление"
-          description="Попробуйте обновить страницу или перейти в каталог."
-          actionLabel="В каталог"
-          actionHref="/catalog"
-        />
+        <GlassCard className="p-6 md:p-8">
+          <EmptyState
+            title="Не удалось загрузить объявление"
+            description="Попробуйте обновить страницу или перейти в каталог."
+            actionLabel="В каталог"
+            actionHref="/catalog"
+          />
+        </GlassCard>
       </div>
     );
   }
@@ -276,7 +286,7 @@ export default function ItemPage({ params }: ItemPageProps) {
           if (from === 'my-items') router.push('/my-items');
           else router.push('/catalog');
         }}
-        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+        className="rounded-md text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-menarium-purple/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         ← {from === 'my-items' ? 'Назад к объявлениям' : 'Назад к каталогу'}
       </button>
@@ -372,7 +382,7 @@ export default function ItemPage({ params }: ItemPageProps) {
                   className="mt-2"
                   onClick={() => setOpen(true)}
                 >
-                  💬 Предложить обмен
+                  Предложить обмен
                 </Button>
               </DialogTrigger>
               <DialogContent className="glass-card rounded-3xl border border-white/10 bg-background/95 text-foreground">
@@ -397,7 +407,16 @@ export default function ItemPage({ params }: ItemPageProps) {
                   </Button>
                 </DialogFooter>
                 {exchangeStatus && (
-                  <div className="mt-2 text-sm text-muted-foreground">{exchangeStatus}</div>
+                  <div
+                    className={cn(
+                      "mt-2 rounded-xl border px-3 py-2 text-sm",
+                      exchangeStatusType === 'error'
+                        ? "border-destructive/40 bg-destructive/10 text-destructive"
+                        : "border-menarium-purple/30 bg-menarium-purple/10 text-foreground"
+                    )}
+                  >
+                    {exchangeStatus}
+                  </div>
                 )}
               </DialogContent>
             </Dialog>

@@ -16,14 +16,22 @@ const filterTriggerClass =
   "h-9 border-white/10 bg-white/5 text-foreground shadow-none backdrop-blur-xl hover:bg-white/10 focus:ring-menarium-purple/40";
 
 const categories = [
-  { value: "FURNITURE", label: "Мебель" },
-  { value: "CLOTHES", label: "Одежда" },
-  { value: "BOOKS", label: "Книги" },
   { value: "ELECTRONICS", label: "Электроника" },
+  { value: "CLOTHING", label: "Одежда" },
+  { value: "FURNITURE", label: "Мебель" },
   { value: "TOOLS", label: "Инструменты" },
-  { value: "TOYS", label: "Игрушки" },
-  { value: "SPORT", label: "Спорт" },
-  { value: "OTHER", label: "Другое" },
+  { value: "KIDS", label: "Детские товары" },
+  { value: "BOOKS", label: "Книги" },
+  { value: "SPORTS", label: "Спорт" },
+  { value: "AUTO", label: "Авто" },
+  { value: "PETS", label: "Животные" },
+  { value: "EDUCATION", label: "Образование" },
+  { value: "HOUSEHOLD", label: "Бытовые услуги" },
+  { value: "BEAUTY", label: "Красота" },
+  { value: "REPAIR", label: "Ремонт" },
+  { value: "DOCUMENTS", label: "Документы" },
+  { value: "CREATIVE", label: "Креатив" },
+  { value: "IT", label: "IT / Технологии" },
 ];
 const types = [
   { value: "THING", label: "Вещь" },
@@ -216,9 +224,10 @@ export default function CatalogPage() {
           variant="secondary"
           size="sm"
           onClick={resetFilters}
-          className="ml-auto shrink-0"
+          disabled={loading || isRefreshing}
+          className="ml-auto shrink-0 touch-manipulation"
         >
-          Сбросить
+          Сбросить фильтры
         </MButton>
       </GlassCard>
       {/* Плашки выбранных фильтров */}
