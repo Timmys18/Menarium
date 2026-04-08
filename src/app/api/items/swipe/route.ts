@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { normalizeToArray } from '@/lib/normalizeItem';
 import { logError } from '@/lib/logger';
 import { errorResponse, getPaging, listResponse } from '@/lib/api-response';
@@ -41,7 +41,9 @@ export async function GET(req: NextRequest) {
       userId: { not: session.user.id },
     };
 
-    if (alreadyProposedIds.length > 0) where.id = { notIn: alreadyProposedIds };
+    if (alreadyProposedIds.length > 0) {
+      where.id = { notIn: alreadyProposedIds };
+    }
     if (type) where.type = type;
     if (category) where.category = category;
     if (city) where.city = { equals: city, mode: 'insensitive' };
