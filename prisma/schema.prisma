@@ -108,10 +108,12 @@ model Message {
   senderId      String
   sender        User        @relation(fields: [senderId], references: [id])
   text          String
+  isRead        Boolean     @default(false)
   createdAt     DateTime    @default(now())
 
   @@index([swapRequestId, createdAt])
   @@index([swapRequestId])
+  @@index([swapRequestId, isRead, createdAt])
   @@index([createdAt])
 }
 
@@ -187,9 +189,11 @@ model ItemMessage {
   senderUserId String
   sender       User       @relation("ItemMessageSender", fields: [senderUserId], references: [id])
   text         String
+  isRead       Boolean    @default(false)
   createdAt    DateTime   @default(now())
 
   @@index([threadId, createdAt])
   @@index([threadId])
+  @@index([threadId, isRead, createdAt])
   @@index([createdAt])
 }

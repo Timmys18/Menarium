@@ -19,6 +19,17 @@ export async function GET(req: NextRequest, context: { params: { threadId: strin
 
   const isParticipant = thread.buyerUserId === session.user.id || thread.sellerUserId === session.user.id;
   if (!isParticipant) return errorResponse('Нет доступа к этому чату.', 403);
+  const readUntil = new Date();
+
+  await prisma.itemMessage.updateMany({
+    where: {
+      threadId,
+      senderUserId: { not: session.user.id },
+      isRead: false,
+      createdAt: { lte: readUntil },
+    },
+    data: { isRead: true },
+  });
 
   const [messages, total] = await Promise.all([
     prisma.itemMessage.findMany({
@@ -71,6 +82,7 @@ export async function POST(req: NextRequest, context: { params: { threadId: stri
         threadId,
         senderUserId: session.user.id,
         text,
+        isRead: false,
       },
     });
 

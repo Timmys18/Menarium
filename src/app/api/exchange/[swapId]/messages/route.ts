@@ -22,6 +22,17 @@ export async function GET(req: NextRequest, context: { params: { swapId: string 
   if (swap.status === 'PENDING' || swap.status === 'DECLINED') {
     return errorResponse('Чат доступен только после принятия обмена.', 403);
   }
+  const readUntil = new Date();
+
+  await prisma.message.updateMany({
+    where: {
+      swapRequestId: swapId,
+      senderId: { not: session.user.id },
+      isRead: false,
+      createdAt: { lte: readUntil },
+    },
+    data: { isRead: true },
+  });
 
   const { limit, offset } = getPaging(req);
   const [messages, total] = await Promise.all([
@@ -79,6 +90,7 @@ export async function POST(req: NextRequest, context: { params: { swapId: string
         swapRequestId: swapId,
         senderId: session.user.id,
         text,
+        isRead: false,
       },
     });
 

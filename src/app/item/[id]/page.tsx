@@ -50,6 +50,7 @@ export default function ItemPage({ params }: ItemPageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get('from');
+  const threadFromQuery = searchParams.get('thread');
   const { data: session } = useSession();
   const [item, setItem] = useState<any>(null);
   const [status, setStatus] = useState<'loading' | 'ok' | 'not-found' | 'error'>('loading');
@@ -72,6 +73,7 @@ export default function ItemPage({ params }: ItemPageProps) {
   const [chatSendLoading, setChatSendLoading] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const hasAutoOpenedThreadRef = useRef(false);
 
   const selectedImage = images[selectedIndex] || null;
 
@@ -161,7 +163,12 @@ export default function ItemPage({ params }: ItemPageProps) {
     const res = await apiGet<{ messages: { id: string; text: string; senderUserId: string; createdAt: string }[] }>(
       `/api/items/chat/${tid}/messages`
     );
-    if (res.ok && res.data?.messages) setMessages(res.data.messages);
+    if (res.ok && res.data?.messages) {
+      setChatError(null);
+      setMessages(res.data.messages);
+      return;
+    }
+    setChatError(('error' in res && res.error) || 'Не удалось загрузить сообщения чата.');
   }, []);
 
   useEffect(() => {
@@ -174,6 +181,17 @@ export default function ItemPage({ params }: ItemPageProps) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    if (hasAutoOpenedThreadRef.current) return;
+    if (!threadFromQuery || !session?.user?.id || status !== 'ok') return;
+    hasAutoOpenedThreadRef.current = true;
+    setChatOpen(true);
+    setThreadId(threadFromQuery);
+    setMessages([]);
+    setChatError(null);
+    fetchChatMessages(threadFromQuery);
+  }, [threadFromQuery, session?.user?.id, status, fetchChatMessages]);
 
   async function openChatModal() {
     if (!session?.user?.id) {
@@ -293,11 +311,12 @@ export default function ItemPage({ params }: ItemPageProps) {
       <button
         onClick={() => {
           if (from === 'my-items') router.push('/my-items');
+          else if (from === 'profile-chats') router.push('/profile/chats');
           else router.push('/catalog');
         }}
         className="rounded-md text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-menarium-purple/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
-        ← {from === 'my-items' ? 'Назад к объявлениям' : 'Назад к каталогу'}
+        ← {from === 'my-items' ? 'Назад к объявлениям' : from === 'profile-chats' ? 'Назад к чатам' : 'Назад к каталогу'}
       </button>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
