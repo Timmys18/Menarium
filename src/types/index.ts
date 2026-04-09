@@ -31,8 +31,9 @@ export type Category = ThingCategory | ServiceCategory;
 export enum SwapRequestStatus {
   PENDING = 'PENDING',
   ACCEPTED = 'ACCEPTED',
-  REJECTED = 'REJECTED',
+  DECLINED = 'DECLINED',
   COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
 }
 
 export enum ExchangeChainStatus {
@@ -69,6 +70,9 @@ export interface SwapRequest {
   senderItemId: string;
   receiverItemId: string;
   status: SwapRequestStatus;
+  senderCompleted: boolean;
+  receiverCompleted: boolean;
+  acceptedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }

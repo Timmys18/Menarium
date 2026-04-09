@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -16,15 +17,18 @@ const statusLabels: Record<string, string> = {
   PENDING: 'Ожидает решения',
   ACCEPTED: 'Принят (в сделке)',
   DECLINED: 'Отклонён',
-  REJECTED: 'Отклонён',
   COMPLETED: 'Завершён',
+  CANCELLED: 'Отменён',
 };
 
-type SwapStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'REJECTED' | 'COMPLETED';
+type SwapStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'COMPLETED' | 'CANCELLED';
 
 interface SwapCore {
   id: string;
   status: SwapStatus;
+  senderCompleted: boolean;
+  receiverCompleted: boolean;
+  acceptedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   senderId: string;
@@ -55,6 +59,8 @@ interface SwapsResponse {
 type Tab = 'incoming' | 'outgoing';
 
 export default function ExchangePage() {
+  const searchParams = useSearchParams();
+  const targetSwapId = searchParams.get('swap');
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<Tab>('incoming');
   const [data, setData] = useState<SwapsResponse>({ incoming: [], outgoing: [] });
@@ -71,6 +77,8 @@ export default function ExchangePage() {
   const [dealChatError, setDealChatError] = useState<string | null>(null);
   const [dealChatClosed, setDealChatClosed] = useState(false);
   const dealMessagesEndRef = useRef<HTMLDivElement>(null);
+  const swapCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [focusedSwapId, setFocusedSwapId] = useState<string | null>(null);
 
   const fetchDealMessages = useCallback(async (swapId: string) => {
     const res = await apiGet<{ messages: { id: string; text: string; senderId: string; createdAt: string }[]; chatClosed?: boolean }>(
@@ -149,13 +157,38 @@ export default function ExchangePage() {
     loadSwaps();
   }, []);
 
-  async function handleAction(swapId: string, status: 'ACCEPTED' | 'DECLINED' | 'COMPLETED') {
-    setActionLoadingId(swapId + status);
+  useEffect(() => {
+    if (!targetSwapId || loading) return;
+
+    const inIncoming = data.incoming.some((entry) => entry.swap.id === targetSwapId);
+    const inOutgoing = data.outgoing.some((entry) => entry.swap.id === targetSwapId);
+
+    if (!inIncoming && !inOutgoing) {
+      setToastMessage('Сделка из уведомления не найдена или больше недоступна.');
+      setFocusedSwapId(null);
+      return;
+    }
+
+    setActiveTab(inIncoming ? 'incoming' : 'outgoing');
+    setFocusedSwapId(targetSwapId);
+  }, [targetSwapId, loading, data.incoming, data.outgoing]);
+
+  useEffect(() => {
+    if (!focusedSwapId) return;
+    const node = swapCardRefs.current[focusedSwapId];
+    if (!node) return;
+    node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const timer = setTimeout(() => setFocusedSwapId(null), 4500);
+    return () => clearTimeout(timer);
+  }, [focusedSwapId, activeTab]);
+
+  async function handleAction(swapId: string, action: 'accept' | 'decline' | 'complete' | 'cancel' | 'revoke') {
+    setActionLoadingId(`${swapId}:${action}`);
     setToastMessage(null);
 
-    const result = await apiPatch<{ swapId: string; status: string }, any>('/api/exchange', {
+    const result = await apiPatch<{ swapId: string; action: string }, any>('/api/exchange', {
       swapId,
-      status,
+      action,
     });
 
     if (!result.ok) {
@@ -168,15 +201,20 @@ export default function ExchangePage() {
       return;
     }
 
-    if (status === 'ACCEPTED') {
+    if (action === 'accept') {
       setToastMessage('Обмен принят.');
-    } else if (status === 'DECLINED') {
+    } else if (action === 'decline') {
       setToastMessage('Обмен отклонён.');
-    } else if (status === 'COMPLETED') {
-      setToastMessage('Обмен завершён.');
+    } else if (action === 'complete') {
+      setToastMessage('Подтверждение сделки сохранено.');
+    } else if (action === 'cancel') {
+      setToastMessage('Сделка отменена.');
+    } else if (action === 'revoke') {
+      setToastMessage('Предложение отозвано.');
     }
 
     await loadSwaps();
+    setFocusedSwapId(swapId);
     setActionLoadingId(null);
   }
 
@@ -242,6 +280,16 @@ export default function ExchangePage() {
             const isIncoming = activeTab === 'incoming';
             const isPending = swap.status === 'PENDING';
             const isAccepted = swap.status === 'ACCEPTED';
+            const isCancelled = swap.status === 'CANCELLED';
+            const cancelledAfterAccepted = isCancelled && Boolean(swap.acceptedAt);
+            const currentUserId = session?.user?.id;
+            const currentUserCompleted = currentUserId
+              ? (currentUserId === swap.senderId ? swap.senderCompleted : swap.receiverCompleted)
+              : false;
+            const waitingCounterparty = swap.status === 'ACCEPTED' && currentUserCompleted;
+            const counterpartCompleted = currentUserId
+              ? (currentUserId === swap.senderId ? swap.receiverCompleted : swap.senderCompleted)
+              : false;
             const borderColor =
               swap.status === 'PENDING'
                 ? '#2563eb'
@@ -249,6 +297,8 @@ export default function ExchangePage() {
                 ? '#22c55e'
                 : swap.status === 'COMPLETED'
                 ? '#64748b'
+                : swap.status === 'CANCELLED'
+                ? '#f59e0b'
                 : '#ef4444';
 
             const fromImage = fromItem?.images?.[0];
@@ -257,7 +307,13 @@ export default function ExchangePage() {
             return (
               <Card
                 key={swap.id}
-                className="flex flex-col md:flex-row items-stretch gap-4 p-4 border-l-4"
+                ref={(node) => {
+                  swapCardRefs.current[swap.id] = node;
+                }}
+                className={cn(
+                  'flex flex-col items-stretch gap-4 border-l-4 p-4 transition md:flex-row',
+                  focusedSwapId === swap.id && 'ring-2 ring-menarium-purple/70 ring-offset-2 ring-offset-background bg-menarium-purple/5',
+                )}
                 style={{ borderColor }}
               >
                 <div className="flex-1 space-y-3">
@@ -321,15 +377,73 @@ export default function ExchangePage() {
                       "mt-1 text-xs font-medium",
                       swap.status === 'PENDING' && 'text-blue-600',
                       swap.status === 'ACCEPTED' && 'text-green-600',
-                      (swap.status === 'DECLINED' || swap.status === 'REJECTED') && 'text-red-600',
+                      swap.status === 'DECLINED' && 'text-red-600',
                       swap.status === 'COMPLETED' && 'text-slate-500',
+                      swap.status === 'CANCELLED' && 'text-amber-600',
                     )}
                   >
                     {statusLabels[swap.status] || swap.status}
                   </div>
+                  {isPending && (
+                    <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-2 text-sm text-blue-700">
+                      Сделка активна. Ожидается решение по обмену.
+                    </div>
+                  )}
+                  {isAccepted && (
+                    <div className="rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2 text-sm text-green-700">
+                      Сделка активна. Обмен принят.
+                    </div>
+                  )}
+                  {swap.status === 'COMPLETED' && (
+                    <div className="rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2 text-sm text-green-700">
+                      <div className="font-semibold">Сделка завершена 🎉</div>
+                      <div className="mt-0.5 text-xs">Объявления перемещены в архив</div>
+                    </div>
+                  )}
+                  {isCancelled && (
+                    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700">
+                      <div className="font-semibold">
+                        {cancelledAfterAccepted ? 'Сделка отменена' : 'Предложение отозвано'}
+                      </div>
+                      <div className="mt-0.5 text-xs">
+                        {cancelledAfterAccepted
+                          ? 'Объявления возвращены в активные, если не участвуют в другой сделке'
+                          : 'Отправитель отозвал предложение до принятия'}
+                      </div>
+                    </div>
+                  )}
+                  {isAccepted && (
+                    <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-muted-foreground">Вы:</span>
+                        <span className={cn(currentUserCompleted ? 'text-green-500' : 'text-amber-500')}>
+                          {currentUserCompleted ? 'Подтверждено' : 'Ожидается'}
+                        </span>
+                      </div>
+                      <div className="mt-1 flex items-center justify-between gap-3">
+                        <span className="text-muted-foreground">Второй участник:</span>
+                        <span className={cn(counterpartCompleted ? 'text-green-500' : 'text-amber-500')}>
+                          {counterpartCompleted ? 'Подтверждено' : 'Ожидается'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  {waitingCounterparty && (
+                    <div className="text-xs text-amber-600">
+                      Вы подтвердили сделку. Ожидаем второго участника.
+                    </div>
+                  )}
                   {activeTab === 'outgoing' && swap.status === 'PENDING' && (
-                    <div className="text-xs text-slate-500">
-                      Ожидает решения второй стороны.
+                    <div className="space-y-2">
+                      <div className="text-xs text-slate-500">Ожидает решения второй стороны.</div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        disabled={Boolean(actionLoadingId)}
+                        onClick={() => handleAction(swap.id, 'revoke')}
+                      >
+                        {actionLoadingId === `${swap.id}:revoke` ? 'Отзыв...' : 'Отозвать предложение'}
+                      </Button>
                     </div>
                   )}
                   {swap.status === 'ACCEPTED' && (
@@ -345,6 +459,11 @@ export default function ExchangePage() {
                   {swap.status === 'COMPLETED' && (
                     <div className="text-sm text-slate-500 mt-2">Обмен завершён. Чат закрыт.</div>
                   )}
+                  {isCancelled && (
+                    <div className="text-sm text-slate-500 mt-2">
+                      {cancelledAfterAccepted ? 'Сделка отменена. Чат закрыт.' : 'Предложение отозвано. Чат закрыт.'}
+                    </div>
+                  )}
                 </div>
 
                 {/* Кнопки действий только для входящих (вы владелец целевого объявления) */}
@@ -355,29 +474,43 @@ export default function ExchangePage() {
                         variant="default"
                         size="sm"
                         disabled={actionLoadingId !== null}
-                        onClick={() => handleAction(swap.id, 'ACCEPTED')}
+                        onClick={() => handleAction(swap.id, 'accept')}
                       >
-                        {actionLoadingId === swap.id + 'ACCEPTED' ? 'Принятие...' : 'Принять'}
+                        {actionLoadingId === `${swap.id}:accept` ? 'Принятие...' : 'Принять'}
                       </Button>
                       <Button
                         variant="destructive"
                         size="sm"
                         disabled={actionLoadingId !== null}
-                        onClick={() => handleAction(swap.id, 'DECLINED')}
+                        onClick={() => handleAction(swap.id, 'decline')}
                       >
-                        {actionLoadingId === swap.id + 'DECLINED' ? 'Отклонение...' : 'Отклонить'}
+                        {actionLoadingId === `${swap.id}:decline` ? 'Отклонение...' : 'Отклонить'}
                       </Button>
                     </>
                   )}
-                  {activeTab === 'incoming' && isAccepted && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={actionLoadingId !== null}
-                      onClick={() => handleAction(swap.id, 'COMPLETED')}
-                    >
-                      {actionLoadingId === swap.id + 'COMPLETED' ? 'Завершение...' : 'Завершить'}
-                    </Button>
+                  {isAccepted && swap.status !== 'COMPLETED' && !isCancelled && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={Boolean(actionLoadingId) || currentUserCompleted}
+                        onClick={() => handleAction(swap.id, 'complete')}
+                      >
+                        {actionLoadingId === `${swap.id}:complete`
+                          ? 'Подтверждение...'
+                          : currentUserCompleted
+                          ? 'Подтверждено'
+                          : 'Завершить сделку'}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        disabled={Boolean(actionLoadingId)}
+                        onClick={() => handleAction(swap.id, 'cancel')}
+                      >
+                        {actionLoadingId === `${swap.id}:cancel` ? 'Отмена...' : 'Отменить сделку'}
+                      </Button>
+                    </>
                   )}
                 </div>
               </Card>

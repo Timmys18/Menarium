@@ -19,7 +19,7 @@ export async function GET(req: NextRequest, context: { params: { swapId: string 
   const isParticipant = swap.senderId === session.user.id || swap.receiverId === session.user.id;
   if (!isParticipant) return errorResponse('Нет доступа к этому чату.', 403);
 
-  if (swap.status === 'PENDING' || swap.status === 'DECLINED' || swap.status === 'REJECTED') {
+  if (swap.status === 'PENDING' || swap.status === 'DECLINED') {
     return errorResponse('Чат доступен только после принятия обмена.', 403);
   }
 
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest, context: { params: { swapId: string 
     prisma.message.count({ where: { swapRequestId: swapId } }),
   ]);
 
-  if (swap.status === 'COMPLETED') {
+  if (swap.status === 'COMPLETED' || swap.status === 'CANCELLED') {
     return listResponse(messages, { limit, offset }, total, { messages, chatClosed: true });
   }
 
@@ -66,11 +66,11 @@ export async function POST(req: NextRequest, context: { params: { swapId: string
     const isParticipant = swap.senderId === session.user.id || swap.receiverId === session.user.id;
     if (!isParticipant) return errorResponse('Нет доступа к этому чату.', 403);
 
-    if (swap.status === 'PENDING' || swap.status === 'DECLINED' || swap.status === 'REJECTED') {
+    if (swap.status === 'PENDING' || swap.status === 'DECLINED') {
       return errorResponse('Чат доступен только после принятия обмена.', 403);
     }
 
-    if (swap.status === 'COMPLETED') {
+    if (swap.status === 'COMPLETED' || swap.status === 'CANCELLED') {
       return errorResponse('Обмен завершён. Чат закрыт.', 409);
     }
 

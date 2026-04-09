@@ -62,6 +62,7 @@ export default function ItemPage({ params }: ItemPageProps) {
   const [exchangeStatus, setExchangeStatus] = useState<string | null>(null);
   const [exchangeStatusType, setExchangeStatusType] = useState<'success' | 'error' | null>(null);
   const [exchangeLoading, setExchangeLoading] = useState(false);
+  const [exchangeSuccessSwapId, setExchangeSuccessSwapId] = useState<string | null>(null);
 
   // Чат с владельцем
   const [chatOpen, setChatOpen] = useState(false);
@@ -220,6 +221,7 @@ export default function ItemPage({ params }: ItemPageProps) {
     setExchangeLoading(true);
     setExchangeStatus(null);
     setExchangeStatusType(null);
+    setExchangeSuccessSwapId(null);
     const res = await fetch('/api/exchange', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -227,9 +229,16 @@ export default function ItemPage({ params }: ItemPageProps) {
     });
     const data = await res.json();
     if (res.ok) {
-      setExchangeStatus('Предложение отправлено!');
+      const swapId =
+        (typeof data?.swap?.id === 'string' && data.swap.id) ||
+        (typeof data?.data?.id === 'string' && data.data.id) ||
+        (typeof data?.data?.swap?.id === 'string' && data.data.swap.id) ||
+        null;
+      setExchangeStatus('Предложение обмена отправлено');
       setExchangeStatusType('success');
+      setExchangeSuccessSwapId(swapId);
       setOpen(false);
+      setSelectedMyItem(undefined);
     } else {
       setExchangeStatus(data.error || 'Ошибка');
       setExchangeStatusType('error');
@@ -349,6 +358,36 @@ export default function ItemPage({ params }: ItemPageProps) {
             </p>
           </div>
 
+          {exchangeStatus && (
+            <div
+              className={cn(
+                'rounded-2xl border px-4 py-3 text-sm',
+                exchangeStatusType === 'error'
+                  ? 'border-destructive/40 bg-destructive/10 text-destructive'
+                  : 'border-menarium-purple/30 bg-menarium-purple/10 text-foreground',
+              )}
+            >
+              <p>{exchangeStatus}</p>
+              {exchangeStatusType === 'success' && (
+                <div className="mt-3">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() =>
+                      router.push(
+                        exchangeSuccessSwapId
+                          ? `/exchange?swap=${exchangeSuccessSwapId}`
+                          : '/exchange',
+                      )
+                    }
+                  >
+                    Перейти в мои обмены
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
           {item.userId !== session?.user?.id && (
             <div className="pt-1">
               <Button
@@ -406,7 +445,7 @@ export default function ItemPage({ params }: ItemPageProps) {
                     {exchangeLoading ? 'Отправка...' : 'Отправить предложение'}
                   </Button>
                 </DialogFooter>
-                {exchangeStatus && (
+                {exchangeStatus && exchangeStatusType === 'error' && (
                   <div
                     className={cn(
                       "mt-2 rounded-xl border px-3 py-2 text-sm",

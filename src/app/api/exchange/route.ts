@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
 
     if (senderItem.status !== 'ACTIVE' || receiverItem.status !== 'ACTIVE') {
       return NextResponse.json(
-        { error: 'Нельзя создать обмен: объявление недоступно.' },
+        { error: 'Обмен невозможен: одно из объявлений недоступно' },
         { status: 409 },
       );
     }
@@ -138,11 +138,11 @@ export async function PATCH(req: NextRequest) {
     return errorResponse('Необходимо войти в систему.', 401);
   }
   try {
-    const { swapId, status } = await req.json();
-
-    if (!['ACCEPTED', 'REJECTED', 'DECLINED', 'COMPLETED'].includes(status)) {
+    const { swapId, action } = await req.json();
+    const normalizedAction = typeof action === 'string' ? action.toLowerCase() : '';
+    if (!['accept', 'decline', 'complete', 'cancel', 'revoke'].includes(normalizedAction)) {
       return NextResponse.json(
-        { error: 'Недопустимый статус обмена.' },
+        { error: 'Недопустимое действие.' },
         { status: 400 },
       );
     }
@@ -162,16 +162,11 @@ export async function PATCH(req: NextRequest) {
         };
       }
 
-      if (swap.receiverId !== session.user.id) {
+      const isSender = swap.senderId === session.user.id;
+      const isReceiver = swap.receiverId === session.user.id;
+      if (!isSender && !isReceiver) {
         return {
           error: { status: 403 as const, body: { error: 'Вы не можете управлять этим обменом.' } },
-        };
-      }
-
-      const finalStatuses = ['REJECTED', 'DECLINED', 'COMPLETED'];
-      if (finalStatuses.includes(swap.status)) {
-        return {
-          error: { status: 409 as const, body: { error: 'Нельзя выполнить действие: обмен уже завершён.' } },
         };
       }
 
@@ -184,7 +179,12 @@ export async function PATCH(req: NextRequest) {
         };
       }
 
-      if (status === 'ACCEPTED') {
+      if (normalizedAction === 'accept') {
+        if (!isReceiver) {
+          return {
+            error: { status: 403 as const, body: { error: 'Только получатель может принять обмен.' } },
+          };
+        }
         if (swap.status !== 'PENDING') {
           return {
             error: { status: 409 as const, body: { error: 'Обмен уже был обработан.' } },
@@ -202,7 +202,12 @@ export async function PATCH(req: NextRequest) {
 
         const updatedSwap = await tx.swapRequest.update({
           where: { id: swapId },
-          data: { status: 'ACCEPTED' },
+          data: {
+            status: 'ACCEPTED',
+            senderCompleted: false,
+            receiverCompleted: false,
+            acceptedAt: swap.acceptedAt ?? new Date(),
+          },
         });
         const updatedSenderItem = await tx.item.update({
           where: { id: senderItem.id },
@@ -212,20 +217,87 @@ export async function PATCH(req: NextRequest) {
           where: { id: receiverItem.id },
           data: { status: 'IN_DEAL' },
         });
+        await tx.notification.create({
+          data: {
+            userId: swap.senderId,
+            type: 'SWAP_ACCEPTED',
+            title: 'Обмен принят',
+            message: 'Ваше предложение обмена принято.',
+            href: `/exchange?swap=${swap.id}`,
+            entityType: 'SwapRequest',
+            entityId: swap.id,
+          },
+        });
 
         return { swap: updatedSwap, senderItem: updatedSenderItem, receiverItem: updatedReceiverItem };
       }
 
-      if (status === 'DECLINED' || status === 'REJECTED') {
+      if (normalizedAction === 'decline') {
+        if (!isReceiver) {
+          return {
+            error: { status: 403 as const, body: { error: 'Только получатель может отклонить обмен.' } },
+          };
+        }
+        if (swap.status !== 'PENDING') {
+          return {
+            error: { status: 409 as const, body: { error: 'Обмен уже был обработан.' } },
+          };
+        }
         const updatedSwap = await tx.swapRequest.update({
           where: { id: swapId },
-          data: { status: 'DECLINED' },
+          data: { status: 'DECLINED', senderCompleted: false, receiverCompleted: false },
+        });
+        await tx.notification.create({
+          data: {
+            userId: swap.senderId,
+            type: 'SWAP_DECLINED',
+            title: 'Обмен отклонён',
+            message: 'Ваше предложение обмена отклонено.',
+            href: `/exchange?swap=${swap.id}`,
+            entityType: 'SwapRequest',
+            entityId: swap.id,
+          },
         });
 
         return { swap: updatedSwap, senderItem, receiverItem };
       }
 
-      if (status === 'COMPLETED') {
+      if (normalizedAction === 'revoke') {
+        if (!isSender) {
+          return {
+            error: { status: 403 as const, body: { error: 'Только отправитель может отозвать предложение.' } },
+          };
+        }
+        if (swap.status !== 'PENDING') {
+          return {
+            error: { status: 409 as const, body: { error: 'Отозвать можно только предложение в ожидании.' } },
+          };
+        }
+
+        const updatedSwap = await tx.swapRequest.update({
+          where: { id: swapId },
+          data: { status: 'CANCELLED', senderCompleted: false, receiverCompleted: false },
+        });
+
+        await tx.notification.create({
+          data: {
+            userId: swap.receiverId,
+            type: 'SWAP_DECLINED',
+            title: 'Предложение отозвано',
+            message: 'Отправитель отозвал предложение обмена.',
+            href: `/exchange?swap=${swap.id}`,
+            entityType: 'SwapRequest',
+            entityId: swap.id,
+          },
+        });
+
+        return { swap: updatedSwap, senderItem, receiverItem };
+      }
+
+      if (normalizedAction === 'complete') {
+        if (swap.status === 'COMPLETED') {
+          return { swap, senderItem, receiverItem };
+        }
         if (swap.status !== 'ACCEPTED') {
           return {
             error: {
@@ -235,17 +307,123 @@ export async function PATCH(req: NextRequest) {
           };
         }
 
+        const nextSenderCompleted = isSender ? true : swap.senderCompleted;
+        const nextReceiverCompleted = isReceiver ? true : swap.receiverCompleted;
+        const shouldComplete = nextSenderCompleted && nextReceiverCompleted;
+        const alreadyCompletedByCurrent = isSender ? swap.senderCompleted : swap.receiverCompleted;
+
         const updatedSwap = await tx.swapRequest.update({
           where: { id: swapId },
-          data: { status: 'COMPLETED' },
+          data: {
+            senderCompleted: nextSenderCompleted,
+            receiverCompleted: nextReceiverCompleted,
+            status: shouldComplete ? 'COMPLETED' : 'ACCEPTED',
+          },
         });
+
+        let updatedSenderItem = senderItem;
+        let updatedReceiverItem = receiverItem;
+        if (shouldComplete) {
+          updatedSenderItem = await tx.item.update({
+            where: { id: senderItem.id },
+            data: { status: 'ARCHIVED' },
+          });
+          updatedReceiverItem = await tx.item.update({
+            where: { id: receiverItem.id },
+            data: { status: 'ARCHIVED' },
+          });
+          await tx.notification.create({
+            data: {
+              userId: swap.senderId,
+              type: 'SWAP_COMPLETED',
+              title: 'Обмен завершён',
+              message: 'Обмен успешно завершён.',
+              href: `/exchange?swap=${swap.id}`,
+              entityType: 'SwapRequest',
+              entityId: swap.id,
+            },
+          });
+          await tx.notification.create({
+            data: {
+              userId: swap.receiverId,
+              type: 'SWAP_COMPLETED',
+              title: 'Обмен завершён',
+              message: 'Обмен успешно завершён.',
+              href: `/exchange?swap=${swap.id}`,
+              entityType: 'SwapRequest',
+              entityId: swap.id,
+            },
+          });
+        }
+
+        if (alreadyCompletedByCurrent && !shouldComplete) {
+          return { swap: updatedSwap, senderItem, receiverItem };
+        }
+
+        return { swap: updatedSwap, senderItem: updatedSenderItem, receiverItem: updatedReceiverItem };
+      }
+
+      if (normalizedAction === 'cancel') {
+        if (swap.status === 'CANCELLED') {
+          return { swap, senderItem, receiverItem };
+        }
+        if (swap.status === 'COMPLETED' || swap.status === 'DECLINED' || swap.status === 'PENDING') {
+          return {
+            error: {
+              status: 409 as const,
+              body: { error: 'Отмена доступна только для принятой сделки.' },
+            },
+          };
+        }
+        if (swap.status !== 'ACCEPTED') {
+          return {
+            error: {
+              status: 409 as const,
+              body: { error: 'Отмена доступна только для принятой сделки.' },
+            },
+          };
+        }
+
+        const updatedSwap = await tx.swapRequest.update({
+          where: { id: swapId },
+          data: { status: 'CANCELLED', senderCompleted: false, receiverCompleted: false },
+        });
+
+        const otherAcceptedForSender = await tx.swapRequest.count({
+          where: {
+            id: { not: swap.id },
+            status: 'ACCEPTED',
+            OR: [{ senderItemId: senderItem.id }, { receiverItemId: senderItem.id }],
+          },
+        });
+        const otherAcceptedForReceiver = await tx.swapRequest.count({
+          where: {
+            id: { not: swap.id },
+            status: 'ACCEPTED',
+            OR: [{ senderItemId: receiverItem.id }, { receiverItemId: receiverItem.id }],
+          },
+        });
+
         const updatedSenderItem = await tx.item.update({
           where: { id: senderItem.id },
-          data: { status: 'ARCHIVED' },
+          data: { status: otherAcceptedForSender > 0 ? 'IN_DEAL' : 'ACTIVE' },
         });
         const updatedReceiverItem = await tx.item.update({
           where: { id: receiverItem.id },
-          data: { status: 'ARCHIVED' },
+          data: { status: otherAcceptedForReceiver > 0 ? 'IN_DEAL' : 'ACTIVE' },
+        });
+
+        const otherSideUserId = isSender ? swap.receiverId : swap.senderId;
+        await tx.notification.create({
+          data: {
+            userId: otherSideUserId,
+            type: 'SWAP_DECLINED',
+            title: 'Сделка отменена',
+            message: 'Вторая сторона отменила сделку.',
+            href: `/exchange?swap=${swap.id}`,
+            entityType: 'SwapRequest',
+            entityId: swap.id,
+          },
         });
 
         return { swap: updatedSwap, senderItem: updatedSenderItem, receiverItem: updatedReceiverItem };
@@ -261,56 +439,6 @@ export async function PATCH(req: NextRequest) {
     }
 
     const { swap, senderItem, receiverItem } = result;
-    const swapHref = `/exchange?swap=${swap.id}`;
-
-    if (swap.status === 'ACCEPTED') {
-      await prisma.notification.create({
-        data: {
-          userId: swap.senderId,
-          type: 'SWAP_ACCEPTED',
-          title: 'Обмен принят',
-          message: 'Ваше предложение обмена принято.',
-          href: swapHref,
-          entityType: 'SwapRequest',
-          entityId: swap.id,
-        },
-      });
-    } else if (swap.status === 'DECLINED') {
-      await prisma.notification.create({
-        data: {
-          userId: swap.senderId,
-          type: 'SWAP_DECLINED',
-          title: 'Обмен отклонён',
-          message: 'Ваше предложение обмена отклонено.',
-          href: swapHref,
-          entityType: 'SwapRequest',
-          entityId: swap.id,
-        },
-      });
-    } else if (swap.status === 'COMPLETED') {
-      await prisma.notification.create({
-        data: {
-          userId: swap.senderId,
-          type: 'SWAP_COMPLETED',
-          title: 'Обмен завершён',
-          message: 'Обмен успешно завершён.',
-          href: swapHref,
-          entityType: 'SwapRequest',
-          entityId: swap.id,
-        },
-      });
-      await prisma.notification.create({
-        data: {
-          userId: swap.receiverId,
-          type: 'SWAP_COMPLETED',
-          title: 'Обмен завершён',
-          message: 'Обмен успешно завершён.',
-          href: swapHref,
-          entityType: 'SwapRequest',
-          entityId: swap.id,
-        },
-      });
-    }
 
     return actionResponse(
       {

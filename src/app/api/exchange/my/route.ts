@@ -34,7 +34,6 @@ export async function GET(req: NextRequest) {
         OR: [{ senderId: session.user.id }, { receiverId: session.user.id }],
       },
     });
-
     const incoming: any[] = [];
     const outgoing: any[] = [];
 
@@ -43,6 +42,9 @@ export async function GET(req: NextRequest) {
         swap: {
           id: swap.id,
           status: swap.status,
+          senderCompleted: swap.senderCompleted,
+          receiverCompleted: swap.receiverCompleted,
+          acceptedAt: swap.acceptedAt,
           createdAt: swap.createdAt,
           updatedAt: swap.updatedAt,
           senderId: swap.senderId,

@@ -55,6 +55,12 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
         { status: 400 },
       );
     }
+    if (existing.status === 'ARCHIVED') {
+      return NextResponse.json(
+        { error: 'Нельзя редактировать архивное объявление.' },
+        { status: 400 },
+      );
+    }
 
     const data = await req.json();
 
@@ -113,6 +119,19 @@ export async function DELETE(_: Request, context: { params: { id: string } }) {
       return NextResponse.json(
         { error: 'Вы не можете удалить чужое объявление.' },
         { status: 403 },
+      );
+    }
+
+    const blockingSwaps = await prisma.swapRequest.count({
+      where: {
+        status: { in: ['PENDING', 'ACCEPTED'] },
+        OR: [{ senderItemId: existing.id }, { receiverItemId: existing.id }],
+      },
+    });
+    if (blockingSwaps > 0) {
+      return NextResponse.json(
+        { error: 'Нельзя удалить объявление, пока по нему есть активные или ожидающие обмены' },
+        { status: 409 },
       );
     }
 
