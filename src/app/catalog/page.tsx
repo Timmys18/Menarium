@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { Search, SlidersHorizontal } from "lucide-react";
 import ItemCard from '@/components/ItemCard';
 import { Badge, Button as MButton, GlassCard } from '@/components/menarium';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,7 +14,7 @@ import { pickArray } from '@/lib/guards';
 import { cn } from '@/lib/utils';
 
 const filterTriggerClass =
-  "h-9 border-white/10 bg-white/5 text-foreground shadow-none backdrop-blur-xl hover:bg-white/10 focus:ring-menarium-purple/40";
+  "h-10 border-white/10 bg-white/5 text-foreground shadow-none backdrop-blur-xl hover:bg-white/10 focus:ring-menarium-purple/40";
 
 const categories = [
   { value: "ELECTRONICS", label: "Электроника" },
@@ -162,73 +163,92 @@ export default function CatalogPage() {
   const safeItems = Array.isArray(items) ? items : [];
 
   return (
-    <div className="container mx-auto max-w-6xl space-y-6 px-4 py-8">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
-          Каталог <span className="gradient-text-brand">объявлений</span>
-        </h1>
-        <p className="text-sm text-muted-foreground md:text-base">
-          Найдите вещи и услуги для обмена по фильтрам ниже
-        </p>
-      </div>
-      {/* Фильтры — только визуальная оболочка; логика без изменений */}
-      <GlassCard className="flex flex-wrap items-center gap-2 p-4 md:gap-3">
-        <Select value={type} onValueChange={(v) => updateFilters({ type: v })}>
-          <SelectTrigger className={cn("w-32", filterTriggerClass)}>
-            <SelectValue placeholder="Тип" />
-          </SelectTrigger>
-          <SelectContent>
-            {types.map((t) => (
-              <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={category} onValueChange={(v) => updateFilters({ category: v })}>
-          <SelectTrigger className={cn("w-40", filterTriggerClass)}>
-            <SelectValue placeholder="Категория" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map((c) => (
-              <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={city} onValueChange={(v) => updateFilters({ city: v })}>
-          <SelectTrigger className={cn("w-40", filterTriggerClass)}>
-            <SelectValue placeholder="Город" />
-          </SelectTrigger>
-          <SelectContent>
-            {cities.map((c) => (
-              <SelectItem key={c} value={c}>{c}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-2 py-1.5">
-          <Checkbox id="acceptsAnything" checked={acceptsAnything} onCheckedChange={(v) => updateFilters({ acceptsAnything: !!v })} />
-          <label htmlFor="acceptsAnything" className="cursor-pointer text-sm text-muted-foreground">
-            Готов на всё
-          </label>
+    <div className="container mx-auto max-w-6xl space-y-6 px-4 py-6 md:py-8">
+      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.05] via-white/[0.02] to-transparent p-5 md:p-7">
+        <div
+          className="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_top_right,rgba(59,127,255,0.2),transparent_65%)]"
+          aria-hidden
+        />
+        <div className="relative space-y-3">
+          <p className="text-xs font-medium uppercase tracking-[0.15em] text-white/60">Обменный каталог</p>
+          <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Каталог</h1>
+          <p className="max-w-2xl text-sm text-muted-foreground md:text-base">Найди идеальный обмен</p>
         </div>
-        <Select value={sort} onValueChange={(v) => updateFilters({ sort: v })}>
-          <SelectTrigger className={cn("w-40 min-w-[10rem]", filterTriggerClass)}>
-            <SelectValue placeholder="Сортировка" />
-          </SelectTrigger>
-          <SelectContent>
-            {sortOptions.map((s) => (
-              <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <MButton
-          type="button"
-          variant="secondary"
-          size="sm"
-          onClick={resetFilters}
-          disabled={loading || isRefreshing}
-          className="ml-auto shrink-0 touch-manipulation"
-        >
-          Сбросить фильтры
-        </MButton>
+      </div>
+      {/* Фильтры — логика без изменений */}
+      <GlassCard className="space-y-4 p-4 md:p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs uppercase tracking-[0.08em] text-white/70">
+            <SlidersHorizontal className="size-3.5 text-primary" />
+            Фильтры
+          </div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-muted-foreground">
+            <Search className="size-3.5" />
+            <span>Найдено: {typeof total === "number" ? total : safeItems.length}</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <Select value={type} onValueChange={(v) => updateFilters({ type: v })}>
+            <SelectTrigger className={cn("w-full", filterTriggerClass)}>
+              <SelectValue placeholder="Тип" />
+            </SelectTrigger>
+            <SelectContent>
+              {types.map((t) => (
+                <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={category} onValueChange={(v) => updateFilters({ category: v })}>
+            <SelectTrigger className={cn("w-full", filterTriggerClass)}>
+              <SelectValue placeholder="Категория" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((c) => (
+                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={city} onValueChange={(v) => updateFilters({ city: v })}>
+            <SelectTrigger className={cn("w-full", filterTriggerClass)}>
+              <SelectValue placeholder="Город" />
+            </SelectTrigger>
+            <SelectContent>
+              {cities.map((c) => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={sort} onValueChange={(v) => updateFilters({ sort: v })}>
+            <SelectTrigger className={cn("w-full", filterTriggerClass)}>
+              <SelectValue placeholder="Сортировка" />
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions.map((s) => (
+                <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5">
+            <Checkbox id="acceptsAnything" checked={acceptsAnything} onCheckedChange={(v) => updateFilters({ acceptsAnything: !!v })} />
+            <label htmlFor="acceptsAnything" className="cursor-pointer text-sm text-muted-foreground">
+              Готов на всё
+            </label>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end">
+          <MButton
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={resetFilters}
+            disabled={loading || isRefreshing}
+            className="shrink-0 touch-manipulation"
+          >
+            Сбросить фильтры
+          </MButton>
+        </div>
       </GlassCard>
       {/* Плашки выбранных фильтров */}
       {activeFilters.length > 0 && (
@@ -240,10 +260,6 @@ export default function CatalogPage() {
           ))}
         </div>
       )}
-      {/* Число найденных результатов */}
-      <div className="text-sm text-muted-foreground">
-        Найдено: {typeof total === "number" ? total : safeItems.length} объявлений
-      </div>
       {/* Список объявлений */}
       <div className="relative min-h-[440px]">
         {isRefreshing && (

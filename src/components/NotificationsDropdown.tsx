@@ -67,15 +67,26 @@ export default function NotificationsDropdown() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" className="relative p-2 rounded-full">
-          <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" d="M12 22a2 2 0 0 0 2-2H10a2 2 0 0 0 2 2Zm6-6V11a6 6 0 1 0-12 0v5l-2 2v1h16v-1l-2-2Z"/></svg>
+        <Button
+          variant="ghost"
+          className="relative size-10 rounded-full border border-white/[0.06] bg-white/[0.04] p-0 text-muted-foreground hover:bg-white/[0.08] hover:text-foreground"
+        >
+          <svg width="22" height="22" fill="none" viewBox="0 0 24 24" aria-hidden>
+            <path
+              stroke="currentColor"
+              strokeWidth="2"
+              d="M12 22a2 2 0 0 0 2-2H10a2 2 0 0 0 2 2Zm6-6V11a6 6 0 1 0-12 0v5l-2 2v1h16v-1l-2-2Z"
+            />
+          </svg>
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full px-1.5 py-0.5">{unreadCount}</span>
+            <span className="absolute -right-0.5 -top-0.5 min-w-[1.125rem] rounded-full bg-primary px-1 text-center text-[10px] font-bold leading-tight text-primary-foreground">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 max-h-96 overflow-y-auto p-0 sm:w-80 w-64">
-        <div className="p-3 border-b font-semibold text-base flex items-center justify-between">
+      <PopoverContent className="w-80 max-h-96 overflow-y-auto border-border/60 bg-popover/95 p-0 shadow-2xl backdrop-blur-xl sm:w-80">
+        <div className="flex items-center justify-between border-b border-border/60 p-3 text-base font-semibold">
           <span>Уведомления</span>
           {unreadCount > 0 && (
             <Button variant="ghost" size="sm" className="text-xs" onClick={markAllAsRead}>
@@ -90,16 +101,23 @@ export default function NotificationsDropdown() {
         ) : notifications.length === 0 ? (
           <div className="p-4 text-center text-muted-foreground text-sm">Уведомлений пока нет</div>
         ) : (
-          <ul className="divide-y">
-            {notifications.map(n => (
+          <ul className="divide-y divide-border/60">
+            {notifications.map((n) => (
               <li
                 key={n.id}
-                className={cn("px-4 py-3 cursor-pointer hover:bg-blue-50 transition select-none active:bg-blue-200", !n.isRead && "bg-blue-100")}
+                className={cn(
+                  'cursor-pointer px-4 py-3 transition select-none hover:bg-white/[0.04]',
+                  !n.isRead && 'bg-primary/10',
+                )}
                 onClick={() => markAsRead(n.id, n.href)}
               >
-                <div className={cn("text-sm font-medium", !n.isRead && "font-bold")}>{n.title}</div>
-                <div className="text-xs text-slate-600 mt-0.5">{n.message}</div>
-                <div className="text-xs text-slate-400 mt-1">{new Date(n.createdAt).toLocaleString()}</div>
+                <div className={cn('text-sm font-medium text-foreground', !n.isRead && 'font-semibold')}>
+                  {n.title}
+                </div>
+                <div className="mt-0.5 text-xs text-muted-foreground">{n.message}</div>
+                <div className="mt-1 text-[11px] text-muted-foreground/80">
+                  {new Date(n.createdAt).toLocaleString('ru-RU')}
+                </div>
               </li>
             ))}
           </ul>

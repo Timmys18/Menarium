@@ -74,7 +74,10 @@ export default function ItemCard({
   const isArchived = item.status === 'ARCHIVED';
 
   return (
-    <GlassCard variant="hover" className="relative overflow-hidden border-white/10">
+    <GlassCard
+      variant="hover"
+      className="group/card relative overflow-hidden rounded-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition-[box-shadow,transform] duration-300 hover:border-primary/30 hover:shadow-glow-blue"
+    >
       {isInDeal && (
         <div className="absolute left-2 top-2 z-10">
           <Badge
@@ -100,20 +103,22 @@ export default function ItemCard({
         onClick={handleClick}
         className="relative z-0 block"
       >
-        {image ? (
-          <img
-            src={image}
-            alt={item.title}
-            className="h-48 w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-48 w-full items-center justify-center bg-white/5">
-            <ImageIcon className="size-7 text-muted-foreground/70" aria-hidden />
-          </div>
-        )}
-        <div className="min-h-[78px] p-4">
-          <h3 className="truncate text-lg font-semibold text-foreground">{item.title}</h3>
-          <p className="truncate text-sm text-muted-foreground">{item.description}</p>
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-white/[0.03]">
+          {image ? (
+            <img
+              src={image}
+              alt={item.title}
+              className="h-full w-full object-cover transition duration-500 group-hover/card:scale-[1.03]"
+            />
+          ) : (
+            <div className="flex h-full min-h-[180px] w-full items-center justify-center bg-white/5">
+              <ImageIcon className="size-8 text-muted-foreground/60" aria-hidden />
+            </div>
+          )}
+        </div>
+        <div className="min-h-[78px] space-y-1 p-4">
+          <h3 className="truncate text-lg font-semibold tracking-tight text-foreground">{item.title}</h3>
+          <p className="line-clamp-2 text-sm text-muted-foreground">{item.description}</p>
         </div>
       </Link>
 

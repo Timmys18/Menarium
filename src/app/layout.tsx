@@ -34,9 +34,9 @@ export default function RootLayout({
             enableSystem={false}
             disableTransitionOnChange
           >
-            <div className="min-h-screen flex flex-col">
+            <div className="flex min-h-screen flex-col">
               <Navbar />
-              <main className="flex-grow">{children}</main>
+              <main className="flex-grow pt-[4.75rem] pb-24 lg:pb-0">{children}</main>
               <Footer />
             </div>
             <Toaster />
